@@ -42,7 +42,7 @@ public class AuthService {
         usuario.setApellidos(request.apellidos());
         usuario.setDireccion(request.direccion());
         usuario.setTelefono(request.telefono());
-        usuario.setRol(RolUsuario.cliente); // Rol por defecto
+        usuario.setRol(request.rol() != null ? request.rol() : RolUsuario.cliente); // Usar el rol especificado o cliente por defecto
 
         // Guardar usuario
         Usuario savedUsuario = usuarioRepository.save(usuario);

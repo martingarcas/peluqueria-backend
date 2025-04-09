@@ -52,7 +52,11 @@ public class UsuarioService {
         });
     }
 
-    public void deleteUsuario(Integer id) {
-        usuarioRepository.deleteById(id);
+    public boolean deleteUsuario(Integer id) {
+        if (usuarioRepository.existsById(id)) {
+            usuarioRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 } 

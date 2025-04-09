@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import com.jve.Entity.RolUsuario;
 
 /*
 DTO con la información necesaria para registrar un nuevo usuario en base de datos
@@ -13,7 +14,8 @@ DTO con la información necesaria para registrar un nuevo usuario en base de dat
     "nombre": "Juan",
     "apellidos": "Pérez",
     "direccion": "Calle Principal 123",
-    "telefono": "123456789"
+    "telefono": "123456789",
+    "rol": "admin"
 }
  */
 public record RegistroRequestDTO(
@@ -40,5 +42,7 @@ public record RegistroRequestDTO(
     String direccion,
     
     @NotNull(message = "El teléfono es obligatorio") 
-    String telefono
+    String telefono,
+
+    RolUsuario rol
 ) {} 

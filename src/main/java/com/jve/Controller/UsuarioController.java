@@ -4,6 +4,7 @@ import com.jve.DTO.UsuarioDTO;
 import com.jve.DTO.RegistroResponseDTO;
 import com.jve.Service.UsuarioService;
 import com.jve.Converter.UsuarioConverter;
+import com.jve.Entity.RolUsuario;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,13 +46,41 @@ public class UsuarioController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUsuario(@PathVariable Integer id) {
+        if (usuarioService.deleteUsuario(id)) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @GetMapping("/trabajadores")
     public ResponseEntity<List<RegistroResponseDTO>> getAllTrabajadores() {
         List<RegistroResponseDTO> trabajadores = usuarioService.getAllUsuarios()
             .stream()
-            .filter(u -> u.getRol().name().equals("trabajador"))
+            .filter(u -> u.getRol() == RolUsuario.trabajador)
             .map(usuarioConverter::toResponseDTO)
             .collect(Collectors.toList());
         return ResponseEntity.ok(trabajadores);
+    }
+
+    @GetMapping("/administradores")
+    public ResponseEntity<List<RegistroResponseDTO>> getAllAdministradores() {
+        List<RegistroResponseDTO> administradores = usuarioService.getAllUsuarios()
+            .stream()
+            .filter(u -> u.getRol() == RolUsuario.admin)
+            .map(usuarioConverter::toResponseDTO)
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(administradores);
+    }
+
+    @GetMapping("/clientes")
+    public ResponseEntity<List<RegistroResponseDTO>> getAllClientes() {
+        List<RegistroResponseDTO> clientes = usuarioService.getAllUsuarios()
+            .stream()
+            .filter(u -> u.getRol() == RolUsuario.cliente)
+            .map(usuarioConverter::toResponseDTO)
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(clientes);
     }
 } 

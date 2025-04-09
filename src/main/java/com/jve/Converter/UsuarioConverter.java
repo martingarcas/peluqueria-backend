@@ -24,6 +24,8 @@ public class UsuarioConverter {
     }
 
     public RegistroResponseDTO toResponseDTO(Usuario usuario) {
-        return modelMapper.map(usuario, RegistroResponseDTO.class);
+        RegistroResponseDTO dto = modelMapper.map(usuario, RegistroResponseDTO.class);
+        dto.setRole(usuario.getRol().name());
+        return dto;
     }
 } 
