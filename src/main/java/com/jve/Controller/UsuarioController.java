@@ -1,0 +1,57 @@
+package com.jve.Controller;
+
+import com.jve.DTO.UsuarioDTO;
+import com.jve.DTO.RegistroResponseDTO;
+import com.jve.Service.UsuarioService;
+import com.jve.Converter.UsuarioConverter;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/usuarios")
+@RequiredArgsConstructor
+public class UsuarioController {
+
+    private final UsuarioService usuarioService;
+    private final UsuarioConverter usuarioConverter;
+
+    @GetMapping
+    public ResponseEntity<List<RegistroResponseDTO>> getAllUsuarios() {
+        List<RegistroResponseDTO> usuarios = usuarioService.getAllUsuarios()
+            .stream()
+            .map(usuarioConverter::toResponseDTO)
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(usuarios);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<RegistroResponseDTO> getUsuarioById(@PathVariable Integer id) {
+        return usuarioService.getUsuarioById(id)
+                .map(usuarioConverter::toResponseDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<RegistroResponseDTO> updateUsuario(@PathVariable Integer id, @Valid @RequestBody UsuarioDTO usuarioDTO) {
+        return usuarioService.updateUsuario(id, usuarioDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/trabajadores")
+    public ResponseEntity<List<RegistroResponseDTO>> getAllTrabajadores() {
+        List<RegistroResponseDTO> trabajadores = usuarioService.getAllUsuarios()
+            .stream()
+            .filter(u -> u.getRol().name().equals("trabajador"))
+            .map(usuarioConverter::toResponseDTO)
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(trabajadores);
+    }
+} 

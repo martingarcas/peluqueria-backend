@@ -19,12 +19,14 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 public class PedidoProducto {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
     @ManyToOne
     @JoinColumn(name = "pedido_id", nullable = false)
     @JsonBackReference
     private Pedido pedido;
 
-    @Id
     @ManyToOne
     @JoinColumn(name = "producto_id", nullable = false)
     @JsonBackReference
