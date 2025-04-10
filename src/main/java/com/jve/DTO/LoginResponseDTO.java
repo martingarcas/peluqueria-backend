@@ -9,6 +9,9 @@ public record LoginResponseDTO(
     String nombre,
     String apellidos,
     String email,
-    String role
+    String role,
+    String direccion,
+    String telefono,
+    String foto
 ) {
 } 

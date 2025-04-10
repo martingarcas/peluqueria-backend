@@ -15,4 +15,5 @@ public class RegistroResponseDTO {
     private String role;
     private String direccion;
     private String telefono;
+    private String foto;
 } 

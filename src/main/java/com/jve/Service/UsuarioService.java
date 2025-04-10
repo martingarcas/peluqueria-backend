@@ -9,6 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +23,7 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioConverter usuarioConverter;
     private final PasswordEncoder passwordEncoder;
+    private final String UPLOAD_DIR = "uploads/users/";
 
     public List<Usuario> getAllUsuarios() {
         return usuarioRepository.findAll();
@@ -58,5 +63,43 @@ public class UsuarioService {
             return true;
         }
         return false;
+    }
+
+    public void updateFotoUrl(Integer id, String fotoUrl) {
+        usuarioRepository.findById(id).ifPresent(usuario -> {
+            usuario.setFoto(fotoUrl);
+            usuarioRepository.save(usuario);
+        });
+    }
+
+    public String getFotoUrl(Integer id) {
+        return usuarioRepository.findById(id)
+                .map(Usuario::getFoto)
+                .orElse(null);
+    }
+
+    public void deleteFoto(Integer id) {
+        usuarioRepository.findById(id).ifPresent(usuario -> {
+            String oldFoto = usuario.getFoto();
+            if (oldFoto != null && !oldFoto.isEmpty()) {
+                try {
+                    // Extraer solo el nombre del archivo de la URL
+                    String fileName = oldFoto.substring(oldFoto.lastIndexOf('/') + 1);
+                    Path filePath = Paths.get(UPLOAD_DIR, fileName);
+                    
+                    if (Files.exists(filePath)) {
+                        Files.delete(filePath);
+                        System.out.println("Archivo eliminado: " + filePath);
+                    } else {
+                        System.out.println("El archivo no existe: " + filePath);
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error al eliminar el archivo: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            usuario.setFoto(null);
+            usuarioRepository.save(usuario);
+        });
     }
 } 

@@ -10,9 +10,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -21,6 +27,7 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
     private final UsuarioConverter usuarioConverter;
+    private final String UPLOAD_DIR = "uploads/users/";
 
     @GetMapping
     public ResponseEntity<List<RegistroResponseDTO>> getAllUsuarios() {
@@ -82,5 +89,76 @@ public class UsuarioController {
             .map(usuarioConverter::toResponseDTO)
             .collect(Collectors.toList());
         return ResponseEntity.ok(clientes);
+    }
+
+    @PostMapping("/{id}/foto")
+    public ResponseEntity<String> uploadFoto(@PathVariable Integer id, @RequestParam("file") MultipartFile file) {
+        try {
+            // Eliminar foto antigua si existe
+            usuarioService.deleteFoto(id);
+
+            // Crear directorio si no existe
+            Path uploadPath = Paths.get(UPLOAD_DIR);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            // Generar nombre único para el archivo
+            String fileName = id + "_" + UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+            Path filePath = uploadPath.resolve(fileName);
+
+            // Guardar archivo
+            Files.copy(file.getInputStream(), filePath);
+
+            // Actualizar URL de la foto en el usuario
+            String fileUrl = "/uploads/users/" + fileName;
+            usuarioService.updateFotoUrl(id, fileUrl);
+
+            return ResponseEntity.ok(fileUrl);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body("Error al subir la imagen: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/foto")
+    public ResponseEntity<byte[]> getFoto(@PathVariable Integer id) {
+        try {
+            String fotoUrl = usuarioService.getFotoUrl(id);
+            if (fotoUrl == null || fotoUrl.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Path filePath = Paths.get(fotoUrl.replace("/uploads/", ""));
+            byte[] image = Files.readAllBytes(filePath);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(image);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @DeleteMapping("/{id}/foto")
+    public ResponseEntity<Void> deleteFoto(@PathVariable Integer id) {
+        try {
+            usuarioService.deleteFoto(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping(value = "/imagen/{filename:.+}", produces = MediaType.IMAGE_JPEG_VALUE)
+    public ResponseEntity<byte[]> getImage(@PathVariable String filename) {
+        try {
+            Path imagePath = Paths.get("uploads/users/" + filename);
+            byte[] imageBytes = Files.readAllBytes(imagePath);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(imageBytes);
+        } catch (IOException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 } 

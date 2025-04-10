@@ -60,7 +60,7 @@ public class AuthController {
             LoginResponseDTO response = authService.login(request);
             return ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(401).body(Map.of("error", "Credenciales inválidas"));
+            return ResponseEntity.status(401).body(Map.of("error", "Credenciales incorrectas"));
         }
     }
 } 
