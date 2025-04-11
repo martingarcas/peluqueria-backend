@@ -39,9 +39,10 @@ public class Contrato {
     @Enumerated(EnumType.STRING)
     private TipoContrato tipoContrato;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private EstadoContrato estado;
+    @ManyToOne
+    @JoinColumn(name = "estado_id", nullable = false)
+    @JsonBackReference
+    private Estado estado;
 
     @Column(name = "url_contrato")
     private String urlContrato;

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.time.LocalDateTime;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -26,28 +27,29 @@ public class Pedido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false)
+    private LocalDateTime fechaPedido;
+
     @ManyToOne
-    @JoinColumn(name = "id_usuario", nullable = false)
-    @JsonBackReference
+    @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    @Column(name = "fecha_pedido", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date fechaPedido;
+    @ManyToOne
+    @JoinColumn(name = "estado_id", nullable = false)
+    private Estado estado;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private EstadoPedido estado;
-
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal total;
+    private Double total;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<PedidoProducto> pedidoProductos = new ArrayList<>();
 
-    @PrePersist
-    protected void onCreate() {
-        fechaPedido = new Date();
+    // Constructor para crear pedidos fácilmente
+    public Pedido(Usuario usuario, Estado estado, Double total) {
+        this.fechaPedido = LocalDateTime.now();
+        this.usuario = usuario;
+        this.estado = estado;
+        this.total = total;
     }
 } 

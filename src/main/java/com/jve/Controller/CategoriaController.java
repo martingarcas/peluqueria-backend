@@ -15,7 +15,6 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/categorias")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class CategoriaController {
 

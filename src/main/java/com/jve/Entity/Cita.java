@@ -37,9 +37,10 @@ public class Cita {
     @Temporal(TemporalType.TIME)
     private Date horaFin;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private EstadoCita estado;
+    @ManyToOne
+    @JoinColumn(name = "estado_id", nullable = false)
+    @JsonBackReference
+    private Estado estado;
 
     @ManyToOne
     @JoinColumn(name = "id_usuario", nullable = false)
@@ -50,11 +51,6 @@ public class Cita {
     @JoinColumn(name = "id_trabajador", nullable = false)
     @JsonBackReference
     private Usuario trabajador;
-
-    @ManyToOne
-    @JoinColumn(name = "Estado_id", nullable = false)
-    @JsonBackReference
-    private Estado estado_id;
 
     @OneToMany(mappedBy = "cita")
     @JsonManagedReference
