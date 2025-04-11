@@ -4,6 +4,7 @@ import com.jve.Converter.ProductoConverter;
 import com.jve.DTO.ProductoDTO;
 import com.jve.Entity.Producto;
 import com.jve.Repository.ProductoRepository;
+import com.jve.Repository.CategoriaRepository;
 import com.jve.Exception.ValidationErrorMessages;
 import com.jve.Exception.ResponseMessages;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class ProductoService {
     
     private final ProductoRepository productoRepository;
     private final ProductoConverter converter;
+    private final CategoriaRepository categoriaRepository;
 
     private void validarDatosProducto(String nombre, String descripcion, BigDecimal precio, Integer stock) {
         if (nombre == null || nombre.trim().isEmpty()) {
@@ -80,11 +82,17 @@ public class ProductoService {
         Producto existente = productoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("No se encontró el producto con id: " + id));
 
-        // Si todos los datos son idénticos, no hacemos update
+        // Si todos los datos son idénticos, incluyendo la categoría, no hacemos update
+        boolean mismaCategoria = (existente.getCategoria() == null && productoDTO.getCategoriaId() == null) ||
+                               (existente.getCategoria() != null && 
+                                productoDTO.getCategoriaId() != null && 
+                                existente.getCategoria().getId().equals(productoDTO.getCategoriaId()));
+
         if (existente.getNombre().equals(productoDTO.getNombre()) &&
             existente.getDescripcion().equals(productoDTO.getDescripcion()) &&
             existente.getPrecio().equals(productoDTO.getPrecio()) &&
-            existente.getStock().equals(productoDTO.getStock())) {
+            existente.getStock().equals(productoDTO.getStock()) &&
+            mismaCategoria) {
             throw new RuntimeException(ResponseMessages.PRODUCTO_NO_CAMBIOS);
         }
 
@@ -102,10 +110,23 @@ public class ProductoService {
             throw new RuntimeException(ValidationErrorMessages.PRODUCTO_YA_EXISTE);
         }
 
+        // Actualizar datos básicos
         existente.setNombre(productoDTO.getNombre());
         existente.setDescripcion(productoDTO.getDescripcion());
         existente.setPrecio(productoDTO.getPrecio());
         existente.setStock(productoDTO.getStock());
+
+        // Actualizar categoría solo si se envía una nueva
+        if (productoDTO.getCategoriaId() != null) {
+            categoriaRepository.findById(productoDTO.getCategoriaId())
+                .ifPresentOrElse(
+                    categoria -> existente.setCategoria(categoria),
+                    () -> {
+                        throw new RuntimeException("No se encontró la categoría con id: " + productoDTO.getCategoriaId());
+                    }
+                );
+        }
+        // Si no se envía categoriaId, mantener la categoría existente
 
         Producto actualizado = productoRepository.save(existente);
         
