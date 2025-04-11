@@ -2,9 +2,11 @@ package com.jve.DTO;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import com.jve.Entity.RolUsuario;
+import com.jve.Exception.ValidationErrorMessages;
 
 /*
 DTO con la información necesaria para registrar un nuevo usuario en base de datos
@@ -19,29 +21,29 @@ DTO con la información necesaria para registrar un nuevo usuario en base de dat
 }
  */
 public record RegistroRequestDTO(
-    @NotNull(message = "La contraseña es obligatoria") 
-    @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
+    @NotBlank(message = ValidationErrorMessages.AUTH_PASSWORD_REQUERIDO) 
+    @Size(min = 8, message = ValidationErrorMessages.AUTH_PASSWORD_LONGITUD)
     @Pattern(
         regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
-        message = "La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial"
+        message = ValidationErrorMessages.AUTH_PASSWORD_FORMATO
     )
     String password,
     
-    @NotNull(message = "El email es obligatorio") 
-    @Email(message = "El email debe tener un formato válido")
-    @Pattern(regexp = "^[A-Za-z0-9+_.-]+@(.+)$", message = "El email debe tener un formato válido")
+    @NotBlank(message = ValidationErrorMessages.AUTH_EMAIL_REQUERIDO) 
+    @Email(message = ValidationErrorMessages.AUTH_EMAIL_FORMATO)
+    @Pattern(regexp = "^[A-Za-z0-9+_.-]+@(.+)$", message = ValidationErrorMessages.AUTH_EMAIL_FORMATO)
     String email,
     
-    @NotNull(message = "El nombre es obligatorio") 
+    @NotBlank(message = ValidationErrorMessages.AUTH_NOMBRE_REQUERIDO) 
     String nombre,
     
-    @NotNull(message = "Los apellidos son obligatorios") 
+    @NotBlank(message = ValidationErrorMessages.AUTH_APELLIDOS_REQUERIDOS) 
     String apellidos,
     
-    @NotNull(message = "La dirección es obligatoria") 
+    @NotBlank(message = ValidationErrorMessages.AUTH_DIRECCION_REQUERIDA) 
     String direccion,
     
-    @NotNull(message = "El teléfono es obligatorio") 
+    @NotBlank(message = ValidationErrorMessages.AUTH_TELEFONO_REQUERIDO) 
     String telefono,
 
     RolUsuario rol

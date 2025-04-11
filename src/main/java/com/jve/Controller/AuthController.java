@@ -27,40 +27,52 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registro(@Valid @RequestBody RegistroRequestDTO request, BindingResult result) {
+    public ResponseEntity<Map<String, Object>> registro(@Valid @RequestBody RegistroRequestDTO request, BindingResult result) {
         // Verificar si hay errores de validación
         if (result.hasErrors()) {
+            Map<String, Object> response = new HashMap<>();
             Map<String, String> errores = new HashMap<>();
             result.getFieldErrors().forEach(error -> 
                 errores.put(error.getField(), error.getDefaultMessage())
             );
-            return ResponseEntity.badRequest().body(errores);
+            response.put("mensaje", "Error de validación");
+            response.put("errores", errores);
+            return ResponseEntity.badRequest().body(response);
         }
 
         try {
-            RegistroResponseDTO response = authService.registro(request);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(authService.registro(request));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO request, BindingResult result) {
+    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequestDTO request, BindingResult result) {
         // Verificar si hay errores de validación
         if (result.hasErrors()) {
+            Map<String, Object> response = new HashMap<>();
             Map<String, String> errores = new HashMap<>();
             result.getFieldErrors().forEach(error -> 
                 errores.put(error.getField(), error.getDefaultMessage())
             );
-            return ResponseEntity.badRequest().body(errores);
+            response.put("mensaje", "Error de validación");
+            response.put("errores", errores);
+            return ResponseEntity.badRequest().body(response);
         }
 
         try {
-            LoginResponseDTO response = authService.login(request);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(authService.login(request));
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(401).body(Map.of("error", "Credenciales incorrectas"));
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Credenciales incorrectas");
+            return ResponseEntity.status(401).body(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 } 

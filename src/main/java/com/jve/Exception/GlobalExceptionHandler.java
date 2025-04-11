@@ -2,10 +2,12 @@ package com.jve.Exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.context.request.WebRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,25 +15,40 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, String>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        String mensaje = "Error en el formato de los datos";
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
         
-        // Detectar errores específicos de tipo
-        String errorMessage = e.getMessage().toLowerCase();
-        if (errorMessage.contains("integer") || errorMessage.contains("number")) {
-            mensaje = "El campo debe ser un número válido";
-        }
+        Map<String, Object> response = new HashMap<>();
+        Map<String, String> errores = new HashMap<>();
         
-        Map<String, String> response = new HashMap<>();
-        response.put("error", mensaje);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        ex.getBindingResult().getFieldErrors().forEach(error -> 
+            errores.put(error.getField(), error.getDefaultMessage())
+        );
+        
+        response.put("mensaje", "Error de validación");
+        response.put("errores", errores);
+        
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(
+            RuntimeException ex) {
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", ex.getMessage());
+        
+        return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, String>> handleAccessDeniedException(AccessDeniedException e) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", "No tienes permisos para realizar esta operación");
+    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(
+            AccessDeniedException ex) {
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "No tienes permisos para realizar esta operación");
+        
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 } 

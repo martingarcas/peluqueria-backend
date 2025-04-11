@@ -11,8 +11,11 @@ import java.util.List;
 @Component
 public class CategoriaConverter {
 
-    @Autowired
     private ProductoConverter productoConverter;
+
+    public CategoriaConverter(ProductoConverter productoConverter) {
+        this.productoConverter = productoConverter;
+    }
 
     public CategoriaDTO toDTO(Categoria categoria) {
         if (categoria == null) return null;

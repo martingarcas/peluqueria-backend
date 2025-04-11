@@ -9,6 +9,7 @@ import com.jve.Entity.RolUsuario;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
@@ -17,6 +18,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.util.UUID;
 
@@ -30,65 +33,83 @@ public class UsuarioController {
     private final String UPLOAD_DIR = "uploads/users/";
 
     @GetMapping
-    public ResponseEntity<List<RegistroResponseDTO>> getAllUsuarios() {
-        List<RegistroResponseDTO> usuarios = usuarioService.getAllUsuarios()
-            .stream()
-            .map(usuarioConverter::toResponseDTO)
-            .collect(Collectors.toList());
-        return ResponseEntity.ok(usuarios);
+    public ResponseEntity<Map<String, Object>> getAllUsuarios() {
+        return ResponseEntity.ok(usuarioService.getAllUsuarios());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RegistroResponseDTO> getUsuarioById(@PathVariable Integer id) {
-        return usuarioService.getUsuarioById(id)
-                .map(usuarioConverter::toResponseDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Map<String, Object>> getUsuarioById(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(usuarioService.getUsuarioById(id));
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RegistroResponseDTO> updateUsuario(@PathVariable Integer id, @Valid @RequestBody UsuarioDTO usuarioDTO) {
-        return usuarioService.updateUsuario(id, usuarioDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Map<String, Object>> updateUsuario(@PathVariable Integer id, @Valid @RequestBody UsuarioDTO usuarioDTO) {
+        try {
+            return ResponseEntity.ok(usuarioService.updateUsuario(id, usuarioDTO));
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUsuario(@PathVariable Integer id) {
-        if (usuarioService.deleteUsuario(id)) {
-            return ResponseEntity.ok().build();
+    public ResponseEntity<Map<String, Object>> deleteUsuario(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(usuarioService.deleteUsuario(id));
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
-        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/trabajadores")
-    public ResponseEntity<List<RegistroResponseDTO>> getAllTrabajadores() {
-        List<RegistroResponseDTO> trabajadores = usuarioService.getAllUsuarios()
-            .stream()
-            .filter(u -> u.getRol() == RolUsuario.trabajador)
-            .map(usuarioConverter::toResponseDTO)
+    public ResponseEntity<Map<String, Object>> getAllTrabajadores() {
+        Map<String, Object> response = usuarioService.getAllUsuarios();
+        @SuppressWarnings("unchecked")
+        List<RegistroResponseDTO> usuarios = (List<RegistroResponseDTO>) response.get("usuarios");
+        
+        List<RegistroResponseDTO> trabajadores = usuarios.stream()
+            .filter(u -> u.getRole().equals(RolUsuario.trabajador.name()))
             .collect(Collectors.toList());
-        return ResponseEntity.ok(trabajadores);
+        
+        response.put("usuarios", trabajadores);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/administradores")
-    public ResponseEntity<List<RegistroResponseDTO>> getAllAdministradores() {
-        List<RegistroResponseDTO> administradores = usuarioService.getAllUsuarios()
-            .stream()
-            .filter(u -> u.getRol() == RolUsuario.admin)
-            .map(usuarioConverter::toResponseDTO)
+    public ResponseEntity<Map<String, Object>> getAllAdministradores() {
+        Map<String, Object> response = usuarioService.getAllUsuarios();
+        @SuppressWarnings("unchecked")
+        List<RegistroResponseDTO> usuarios = (List<RegistroResponseDTO>) response.get("usuarios");
+        
+        List<RegistroResponseDTO> administradores = usuarios.stream()
+            .filter(u -> u.getRole().equals(RolUsuario.admin.name()))
             .collect(Collectors.toList());
-        return ResponseEntity.ok(administradores);
+        
+        response.put("usuarios", administradores);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/clientes")
-    public ResponseEntity<List<RegistroResponseDTO>> getAllClientes() {
-        List<RegistroResponseDTO> clientes = usuarioService.getAllUsuarios()
-            .stream()
-            .filter(u -> u.getRol() == RolUsuario.cliente)
-            .map(usuarioConverter::toResponseDTO)
+    public ResponseEntity<Map<String, Object>> getAllClientes() {
+        Map<String, Object> response = usuarioService.getAllUsuarios();
+        @SuppressWarnings("unchecked")
+        List<RegistroResponseDTO> usuarios = (List<RegistroResponseDTO>) response.get("usuarios");
+        
+        List<RegistroResponseDTO> clientes = usuarios.stream()
+            .filter(u -> u.getRole().equals(RolUsuario.cliente.name()))
             .collect(Collectors.toList());
-        return ResponseEntity.ok(clientes);
+        
+        response.put("usuarios", clientes);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{id}/foto")

@@ -11,6 +11,7 @@ import com.jve.Repository.ProductoRepository;
 import com.jve.Exception.ResourceNotFoundException;
 import com.jve.Exception.ResourceAlreadyExistsException;
 import com.jve.Exception.ValidationErrorMessages;
+import com.jve.Exception.ResponseMessages;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,17 +45,27 @@ public class CategoriaService {
         }
     }
 
-    public List<CategoriaDTO> obtenerTodas() {
-        return categoriaRepository.findAll()
+    public Map<String, Object> obtenerTodas() {
+        List<CategoriaDTO> categorias = categoriaRepository.findAll()
                 .stream()
                 .map(converter::toDTO)
                 .collect(Collectors.toList());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", ResponseMessages.CATEGORIAS_LISTADAS);
+        response.put("categorias", categorias);
+        return response;
     }
 
-    public CategoriaDTO obtenerPorId(Integer id) {
-        return categoriaRepository.findById(id)
+    public Map<String, Object> obtenerPorId(Integer id) {
+        CategoriaDTO categoria = categoriaRepository.findById(id)
                 .map(converter::toDTO)
                 .orElseThrow(() -> new RuntimeException(String.format(ValidationErrorMessages.CATEGORIA_NO_ENCONTRADA, id)));
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Categoría encontrada con éxito");
+        response.put("categoria", categoria);
+        return response;
     }
 
     @Transactional
@@ -175,7 +186,7 @@ public class CategoriaService {
     }
 
     @Transactional
-    public CategoriaDTO actualizar(Integer id, CategoriaDTO categoriaDTO) {
+    public Map<String, Object> actualizar(Integer id, CategoriaDTO categoriaDTO) {
         Categoria existente = categoriaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(String.format(ValidationErrorMessages.CATEGORIA_NO_ENCONTRADA, id)));
 
@@ -187,8 +198,7 @@ public class CategoriaService {
         // Si tanto nombre como descripción son idénticos, no hacemos update
         if (existente.getNombre().equals(categoriaDTO.getNombre()) && 
             existente.getDescripcion().equals(categoriaDTO.getDescripcion())) {
-            throw new RuntimeException("La categoría ya existe con el mismo nombre '" + categoriaDTO.getNombre() + 
-                "' y la misma descripción. No se requieren cambios.");
+            throw new RuntimeException(ResponseMessages.CATEGORIA_NO_CAMBIOS);
         }
 
         // Si el nombre es diferente, validamos que no exista
@@ -201,11 +211,15 @@ public class CategoriaService {
         existente.setDescripcion(categoriaDTO.getDescripcion());
         
         Categoria updated = categoriaRepository.save(existente);
-        return converter.toDTO(updated);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", ResponseMessages.CATEGORIA_ACTUALIZADA);
+        response.put("categoria", converter.toDTO(updated));
+        return response;
     }
 
     @Transactional
-    public String eliminar(Integer id, Boolean eliminarProductos) {
+    public Map<String, Object> eliminar(Integer id, Boolean eliminarProductos) {
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(String.format(ValidationErrorMessages.CATEGORIA_NO_ENCONTRADA, id)));
 
@@ -222,16 +236,20 @@ public class CategoriaService {
             throw new RuntimeException("La categoría tiene productos asociados. Debes especificar 'eliminarProductos=true' para eliminar los productos junto con la categoría, o 'eliminarProductos=false' para moverlos a la categoría 'Otros productos'");
         }
 
+        Map<String, Object> response = new HashMap<>();
+
         // Si no tiene productos, ignorar el parámetro eliminarProductos
         if (!tieneProductos) {
             categoriaRepository.delete(categoria);
-            return "Categoría eliminada con éxito";
+            response.put("mensaje", ResponseMessages.CATEGORIA_ELIMINADA);
+            return response;
         }
 
         // Si tiene productos, proceder según lo especificado
         if (eliminarProductos) {
             categoriaRepository.delete(categoria);
-            return "Categoría eliminada con éxito y sus productos";
+            response.put("mensaje", ResponseMessages.CATEGORIA_ELIMINADA + " y sus productos");
+            return response;
         } else {
             Categoria categoriaGeneral = categoriaRepository.findByNombreIgnoreCase(NOMBRE_PROTEGIDO)
                 .orElseThrow(() -> new RuntimeException("La categoría protegida no existe"));
@@ -244,7 +262,8 @@ public class CategoriaService {
             
             categoria.getProductos().clear();
             categoriaRepository.delete(categoria);
-            return "Categoría eliminada con éxito. Los productos se movieron a 'Otros productos'";
+            response.put("mensaje", ResponseMessages.CATEGORIA_ELIMINADA + ". Los productos se movieron a 'Otros productos'");
+            return response;
         }
     }
 } 
