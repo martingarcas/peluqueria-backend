@@ -11,8 +11,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "producto")
@@ -40,7 +39,7 @@ public class Producto {
 
     @ManyToOne
     @JoinColumn(name = "id_categoria", nullable = false)
-    @JsonBackReference
+    @JsonIgnoreProperties("productos")
     private Categoria categoria;
 
     @Column(name = "fecha_creacion")
@@ -48,7 +47,7 @@ public class Producto {
     private Date fechaCreacion;
 
     @OneToMany(mappedBy = "producto")
-    @JsonManagedReference
+    @JsonIgnoreProperties("producto")
     private List<PedidoProducto> pedidoProductos = new ArrayList<>();
 
     @PrePersist

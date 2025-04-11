@@ -94,7 +94,7 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + this.rol.name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.rol.name().toUpperCase()));
     }
 
     @Override
