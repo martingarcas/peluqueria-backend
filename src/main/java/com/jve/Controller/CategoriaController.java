@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/categorias")
@@ -27,11 +28,12 @@ public class CategoriaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CategoriaDTO> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerPorId(@PathVariable Integer id) {
         try {
             return ResponseEntity.ok(categoriaService.obtenerPorId(id));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "No se encontró la categoría con id: " + id));
         }
     }
 
@@ -39,10 +41,10 @@ public class CategoriaController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> crear(@Valid @RequestBody CategoriaDTO categoriaDTO) {
         try {
-            CategoriaDTO nuevaCategoria = categoriaService.crear(categoriaDTO);
-            return new ResponseEntity<>(nuevaCategoria, HttpStatus.CREATED);
+            Map<String, Object> response = categoriaService.crear(categoriaDTO);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -61,12 +63,14 @@ public class CategoriaController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> eliminar(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminar(
+            @PathVariable Integer id,
+            @RequestParam(required = false) Boolean eliminarProductos) {
         try {
-            categoriaService.eliminar(id);
-            return ResponseEntity.ok().body(Map.of("mensaje", "Categoría eliminada con éxito"));
+            String mensaje = categoriaService.eliminar(id, eliminarProductos);
+            return ResponseEntity.ok().body(Map.of("mensaje", mensaje));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body(Map.of("error", "No se encontró la categoría con ID: " + id));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 } 
