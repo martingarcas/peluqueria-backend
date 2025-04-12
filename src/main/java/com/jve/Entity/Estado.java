@@ -29,7 +29,8 @@ public class Estado {
     private String nombre;
 
     @Column(name = "tipo_estado", nullable = false)
-    private String tipoEstado; // CITA, CONTRATO, PEDIDO
+    @Enumerated(EnumType.STRING)
+    private TipoEstado tipoEstado;
 
     @OneToMany(mappedBy = "estado")
     @JsonManagedReference
@@ -46,6 +47,11 @@ public class Estado {
     // Constructor para crear estados fácilmente
     public Estado(String nombre, String tipoEstado) {
         this.nombre = nombre;
-        this.tipoEstado = tipoEstado;
+        this.tipoEstado = TipoEstado.valueOf(tipoEstado);
+    }
+
+    public boolean datosIguales(Estado otro) {
+        return this.nombre.equals(otro.getNombre()) &&
+               this.tipoEstado == otro.getTipoEstado();
     }
 } 

@@ -35,4 +35,8 @@ public class ValidationErrorMessages {
     public static final String AUTH_APELLIDOS_REQUERIDOS = "Los apellidos son obligatorios";
     public static final String AUTH_DIRECCION_REQUERIDA = "La dirección es obligatoria";
     public static final String AUTH_TELEFONO_REQUERIDO = "El teléfono es obligatorio";
+
+    // Mensajes para Estado
+    public static final String ESTADO_NO_ENCONTRADO = "Estado no encontrado";
+    public static final String ESTADO_YA_EXISTE = "Ya existe un estado con ese nombre y tipo";
 } 

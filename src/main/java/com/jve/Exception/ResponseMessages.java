@@ -27,4 +27,12 @@ public class ResponseMessages {
     public static final String PRODUCTO_ELIMINADO = "Producto eliminado con éxito";
     public static final String PRODUCTOS_LISTADOS = "Productos recuperados con éxito";
     public static final String PRODUCTO_NO_CAMBIOS = "No se requieren cambios, el producto ya existe con los mismos datos";
+
+    // Mensajes para Estado
+    public static final String ESTADO_CREADO = "Estado creado exitosamente";
+    public static final String ESTADO_ACTUALIZADO = "Estado actualizado exitosamente";
+    public static final String ESTADO_ELIMINADO = "Estado eliminado exitosamente";
+    public static final String LISTA_RECUPERADA = "Lista recuperada exitosamente";
+    public static final String ENTIDAD_RECUPERADA = "Entidad recuperada exitosamente";
+    public static final String NO_CAMBIOS_NECESARIOS = "No se requieren cambios, el estado ya existe con los mismos datos";
 } 
