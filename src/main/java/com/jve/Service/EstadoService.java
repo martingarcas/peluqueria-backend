@@ -112,6 +112,8 @@ public class EstadoService {
     public void inicializarEstados() {
         // Estados para Pedidos
         crearEstadoSiNoExiste("PENDIENTE", "PEDIDO");
+        crearEstadoSiNoExiste("ACEPTADO", "PEDIDO");
+        crearEstadoSiNoExiste("ENVIADO", "PEDIDO");
         crearEstadoSiNoExiste("COMPLETADO", "PEDIDO");
         crearEstadoSiNoExiste("CANCELADO", "PEDIDO");
 
@@ -122,8 +124,8 @@ public class EstadoService {
 
         // Estados para Contratos
         crearEstadoSiNoExiste("ACTIVO", "CONTRATO");
-        crearEstadoSiNoExiste("FINALIZADO", "CONTRATO");
-        crearEstadoSiNoExiste("CANCELADO", "CONTRATO");
+        crearEstadoSiNoExiste("PENDIENTE", "CONTRATO");
+        crearEstadoSiNoExiste("INACTIVO", "CONTRATO");
     }
 
     private void crearEstadoSiNoExiste(String nombre, String tipo) {

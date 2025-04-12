@@ -39,4 +39,17 @@ public class ValidationErrorMessages {
     // Mensajes para Estado
     public static final String ESTADO_NO_ENCONTRADO = "Estado no encontrado";
     public static final String ESTADO_YA_EXISTE = "Ya existe un estado con ese nombre y tipo";
+
+    // Mensajes para Usuario
+    public static final String USUARIO_NO_ENCONTRADO = "Usuario no encontrado";
+    public static final String USUARIO_NO_ES_TRABAJADOR = "El usuario no es un trabajador";
+    
+    // Mensajes para Contrato
+    public static final String CONTRATO_NO_ENCONTRADO = "Contrato no encontrado";
+    public static final String CONTRATO_TEMPORAL_REQUIERE_FECHA_FIN = "Un contrato temporal requiere fecha de finalización";
+    public static final String CONTRATO_FIJO_NO_FECHA_FIN = "Un contrato fijo no debe tener fecha de finalización";
+    public static final String CONTRATO_FECHA_FIN_ANTERIOR_INICIO = "La fecha de fin no puede ser anterior a la fecha de inicio";
+    public static final String CONTRATOS_USUARIO_RECUPERADOS = "Contratos del usuario recuperados con éxito";
+    public static final String CONTRATO_YA_EXISTE = "El usuario ya tiene un contrato activo o pendiente";
+    public static final String CONTRATO_FECHA_INICIO_PASADA = "La fecha de inicio no puede ser una fecha pasada";
 } 

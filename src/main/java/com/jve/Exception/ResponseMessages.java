@@ -35,4 +35,9 @@ public class ResponseMessages {
     public static final String LISTA_RECUPERADA = "Lista recuperada exitosamente";
     public static final String ENTIDAD_RECUPERADA = "Entidad recuperada exitosamente";
     public static final String NO_CAMBIOS_NECESARIOS = "No se requieren cambios, el estado ya existe con los mismos datos";
+
+    // Mensajes para Contrato
+    public static final String CONTRATO_CREADO = "Contrato creado exitosamente";
+    public static final String CONTRATO_ACTUALIZADO = "Contrato actualizado exitosamente";
+    public static final String CONTRATO_ELIMINADO = "Contrato eliminado exitosamente";
 } 

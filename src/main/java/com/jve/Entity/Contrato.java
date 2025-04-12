@@ -2,32 +2,28 @@ package com.jve.Entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "contrato")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Contrato {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "id_usuario", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
     @JsonBackReference
     private Usuario usuario;
 
-    @Column(name = "fecha_inicio_contrato")
+    @Column(name = "fecha_inicio_contrato", nullable = false)
     @Temporal(TemporalType.DATE)
     private Date fechaInicioContrato;
 
@@ -39,7 +35,7 @@ public class Contrato {
     @Enumerated(EnumType.STRING)
     private TipoContrato tipoContrato;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "estado_id", nullable = false)
     @JsonBackReference
     private Estado estado;
