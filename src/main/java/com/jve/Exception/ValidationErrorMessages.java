@@ -52,4 +52,14 @@ public class ValidationErrorMessages {
     public static final String CONTRATOS_USUARIO_RECUPERADOS = "Contratos del usuario recuperados con éxito";
     public static final String CONTRATO_YA_EXISTE = "El usuario ya tiene un contrato activo o pendiente";
     public static final String CONTRATO_FECHA_INICIO_PASADA = "La fecha de inicio no puede ser una fecha pasada";
+
+    // Mensajes para Horario
+    public static final String HORARIO_NO_ENCONTRADO = "El horario no existe";
+    public static final String HORARIO_SOLAPAMIENTO = "El horario se solapa con otro existente";
+    public static final String HORARIO_HORA_FIN_ANTERIOR = "La hora de fin debe ser posterior a la hora de inicio";
+    public static final String HORARIO_DIA_REQUERIDO = "El día de la semana es obligatorio";
+    public static final String HORARIO_HORA_INICIO_REQUERIDA = "La hora de inicio es obligatoria";
+    public static final String HORARIO_HORA_FIN_REQUERIDA = "La hora de fin es obligatoria";
+    public static final String DIA_SEMANA_INVALIDO = "El día de la semana no es válido. Valores permitidos: lunes, martes, miércoles, jueves, viernes, sábado, domingo";
+    public static final String ERROR_FORMATO_JSON = "Error en el formato de los datos enviados";
 } 

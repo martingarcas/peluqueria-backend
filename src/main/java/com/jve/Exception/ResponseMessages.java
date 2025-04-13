@@ -40,4 +40,9 @@ public class ResponseMessages {
     public static final String CONTRATO_CREADO = "Contrato creado exitosamente";
     public static final String CONTRATO_ACTUALIZADO = "Contrato actualizado exitosamente";
     public static final String CONTRATO_ELIMINADO = "Contrato eliminado exitosamente";
+
+    // Mensajes para Horario
+    public static final String HORARIO_CREADO = "Horario creado exitosamente";
+    public static final String HORARIO_ACTUALIZADO = "Horario actualizado exitosamente";
+    public static final String HORARIO_ELIMINADO = "Horario eliminado exitosamente";
 } 

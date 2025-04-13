@@ -1,41 +1,30 @@
 package com.jve.Entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.util.Date;
-
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import lombok.Data;
+import java.sql.Time;
+import java.util.Set;
 
 @Entity
-@Table(name = "horario")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
 public class Horario {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
-    @ManyToOne
-    @JoinColumn(name = "id_trabajador", nullable = false)
-    @JsonBackReference
-    private Usuario trabajador;
-
-    @Column(name = "dia_semana", nullable = false)
+    
+    private String nombre;
+    
     @Enumerated(EnumType.STRING)
     private DiaSemana diaSemana;
-
-    @Column(name = "hora_inicio", nullable = false)
-    @Temporal(TemporalType.TIME)
-    private Date horaInicio;
-
-    @Column(name = "hora_fin", nullable = false)
-    @Temporal(TemporalType.TIME)
-    private Date horaFin;
+    
+    private Time horaInicio;
+    private Time horaFin;
+    
+    @ManyToMany
+    @JoinTable(
+        name = "horario_trabajador",
+        joinColumns = @JoinColumn(name = "horario_id"),
+        inverseJoinColumns = @JoinColumn(name = "trabajador_id")
+    )
+    private Set<Usuario> trabajadores;
 } 
