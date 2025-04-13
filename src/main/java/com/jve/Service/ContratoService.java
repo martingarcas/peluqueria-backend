@@ -12,7 +12,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -69,7 +75,7 @@ public class ContratoService {
     }
 
     @Transactional
-    public Map<String, Object> crear(ContratoDTO contratoDTO) {
+    public Map<String, Object> crear(ContratoDTO contratoDTO, MultipartFile documento) {
         Map<String, Object> response = new HashMap<>();
 
         Usuario usuario = usuarioRepository.findById(contratoDTO.getUsuarioId())
@@ -88,21 +94,42 @@ public class ContratoService {
 
         validarFechasContrato(contratoDTO);
 
-        // Ignoramos el estado que venga del frontend y lo asignamos según la fecha
-        contratoDTO.setEstadoId(null);
-        String estadoNombre = contratoDTO.getFechaInicioContrato().compareTo(new Date()) <= 0 ? "ACTIVO" : "PENDIENTE";
-        Estado estado = estadoRepository.findByNombreAndTipoEstado(estadoNombre, TipoEstado.CONTRATO)
-            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.ESTADO_NO_ENCONTRADO));
-        contratoDTO.setEstadoId(estado.getId());
+        try {
+            // Crear directorio si no existe
+            Path uploadPath = Paths.get("uploads", "contratos");
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
 
-        Contrato contrato = contratoConverter.toEntity(contratoDTO);
-        Contrato contratoGuardado = contratoRepository.save(contrato);
+            // Generar nombre único para el archivo
+            String fileName = String.format("contrato_%d_%d.pdf", 
+                usuario.getId(), System.currentTimeMillis());
+            
+            // Guardar el archivo
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(documento.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        response.put("mensaje", ResponseMessages.CONTRATO_CREADO);
-        response.put("contrato", contratoConverter.toDTO(contratoGuardado));
-        return response;
+            // Establecer la URL del contrato
+            contratoDTO.setUrlContrato("/contratos/" + fileName);
+
+            // Ignoramos el estado que venga del frontend y lo asignamos según la fecha
+            contratoDTO.setEstadoId(null);
+            String estadoNombre = contratoDTO.getFechaInicioContrato().compareTo(new Date()) <= 0 ? "ACTIVO" : "PENDIENTE";
+            Estado estado = estadoRepository.findByNombreAndTipoEstado(estadoNombre, TipoEstado.CONTRATO)
+                .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.ESTADO_NO_ENCONTRADO));
+            contratoDTO.setEstadoId(estado.getId());
+
+            Contrato contrato = contratoConverter.toEntity(contratoDTO);
+            Contrato contratoGuardado = contratoRepository.save(contrato);
+
+            response.put("mensaje", ResponseMessages.CONTRATO_CREADO);
+            response.put("contrato", contratoConverter.toDTO(contratoGuardado));
+            return response;
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error al guardar el documento del contrato: " + e.getMessage());
+        }
     }
-
 
     @Transactional
     public Map<String, Object> actualizar(Integer id, ContratoDTO contratoDTO) {
@@ -150,7 +177,6 @@ public class ContratoService {
         response.put("contrato", contratoConverter.toDTO(actualizado));
         return response;
     }
-
 
     private void validarFechasContrato(ContratoDTO contratoDTO) {
         if (contratoDTO.getTipoContrato() == TipoContrato.temporal && contratoDTO.getFechaFinContrato() == null) {
