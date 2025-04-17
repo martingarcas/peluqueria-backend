@@ -45,4 +45,11 @@ public class ResponseMessages {
     public static final String HORARIO_CREADO = "Horario creado exitosamente";
     public static final String HORARIO_ACTUALIZADO = "Horario actualizado exitosamente";
     public static final String HORARIO_ELIMINADO = "Horario eliminado exitosamente";
+
+    // Mensajes para Servicio
+    public static final String SERVICIO_CREADO = "Servicio creado exitosamente";
+    public static final String SERVICIO_ACTUALIZADO = "Servicio actualizado exitosamente";
+    public static final String SERVICIO_ELIMINADO = "Servicio eliminado exitosamente";
+    public static final String SERVICIOS_LISTADOS = "Servicios recuperados exitosamente";
+    public static final String SERVICIOS_ASIGNADOS = "Servicios asignados exitosamente al trabajador";
 } 

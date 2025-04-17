@@ -9,6 +9,8 @@ import com.jve.Exception.ValidationErrorMessages;
 import com.jve.Exception.ResponseMessages;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
@@ -93,7 +95,7 @@ public class ProductoService {
             existente.getPrecio().equals(productoDTO.getPrecio()) &&
             existente.getStock().equals(productoDTO.getStock()) &&
             mismaCategoria) {
-            throw new RuntimeException(ResponseMessages.PRODUCTO_NO_CAMBIOS);
+            throw new ResponseStatusException(HttpStatus.NOT_MODIFIED);
         }
 
         // Validar datos

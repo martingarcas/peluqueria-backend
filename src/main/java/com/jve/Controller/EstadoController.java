@@ -91,7 +91,7 @@ public class EstadoController {
         try {
             Map<String, Object> response = estadoService.actualizar(id, estadoDTO);
             if (response.get("mensaje").equals(ResponseMessages.NO_CAMBIOS_NECESARIOS)) {
-                return ResponseEntity.status(HttpStatus.NOT_MODIFIED).body(response);
+                return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
             }
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {

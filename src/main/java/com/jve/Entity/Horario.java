@@ -3,7 +3,9 @@ package com.jve.Entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Time;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Data
@@ -20,11 +22,7 @@ public class Horario {
     private Time horaInicio;
     private Time horaFin;
     
-    @ManyToMany
-    @JoinTable(
-        name = "horario_trabajador",
-        joinColumns = @JoinColumn(name = "horario_id"),
-        inverseJoinColumns = @JoinColumn(name = "trabajador_id")
-    )
-    private Set<Usuario> trabajadores;
+    @ManyToMany(mappedBy = "horarios")
+    @JsonBackReference
+    private List<Usuario> trabajadores = new ArrayList<>();
 } 

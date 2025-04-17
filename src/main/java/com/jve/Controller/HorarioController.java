@@ -10,6 +10,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -72,10 +74,11 @@ public class HorarioController {
 
         try {
             return ResponseEntity.ok(horarioService.actualizar(id, horarioDTO));
-        } catch (RuntimeException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+        } catch (ResponseStatusException ex) {
+            if (ex.getStatusCode() == HttpStatus.NOT_MODIFIED) {
+                return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+            }
+            throw ex;
         }
     }
 

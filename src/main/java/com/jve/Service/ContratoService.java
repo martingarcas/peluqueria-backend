@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -137,6 +139,13 @@ public class ContratoService {
 
         Contrato contratoExistente = contratoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.CONTRATO_NO_ENCONTRADO));
+
+        // Si no hay cambios, retornar 304
+        if ((contratoDTO.getEstadoId() == null || contratoDTO.getEstadoId().equals(contratoExistente.getEstado().getId())) &&
+            (contratoDTO.getFechaFinContrato() == null || contratoDTO.getFechaFinContrato().equals(contratoExistente.getFechaFinContrato())) &&
+            (contratoDTO.getUrlContrato() == null || contratoDTO.getUrlContrato().equals(contratoExistente.getUrlContrato()))) {
+            throw new ResponseStatusException(HttpStatus.NOT_MODIFIED);
+        }
 
         // Mantener los datos existentes que no se van a actualizar
         if (contratoDTO.getEstadoId() == null) {

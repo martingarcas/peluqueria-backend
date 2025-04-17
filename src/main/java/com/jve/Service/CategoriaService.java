@@ -14,9 +14,11 @@ import com.jve.Exception.ValidationErrorMessages;
 import com.jve.Exception.ResponseMessages;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -198,7 +200,7 @@ public class CategoriaService {
         // Si tanto nombre como descripción son idénticos, no hacemos update
         if (existente.getNombre().equals(categoriaDTO.getNombre()) && 
             existente.getDescripcion().equals(categoriaDTO.getDescripcion())) {
-            throw new RuntimeException(ResponseMessages.CATEGORIA_NO_CAMBIOS);
+            throw new ResponseStatusException(HttpStatus.NOT_MODIFIED);
         }
 
         // Si el nombre es diferente, validamos que no exista

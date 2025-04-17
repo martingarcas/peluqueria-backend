@@ -13,11 +13,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -99,6 +99,22 @@ public class HorarioService {
 
         Horario horarioExistente = horarioRepository.findById(id)
             .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.HORARIO_NO_ENCONTRADO));
+
+        // Verificar si hay cambios
+        boolean mismosHorarios = horarioExistente.getHoraInicio().equals(horarioDTO.getHoraInicio()) &&
+                                horarioExistente.getHoraFin().equals(horarioDTO.getHoraFin()) &&
+                                horarioExistente.getDiaSemana().equals(horarioDTO.getDiaSemana());
+        
+        Set<Integer> trabajadoresExistentes = horarioExistente.getTrabajadores().stream()
+                                            .map(Usuario::getId)
+                                            .collect(Collectors.toSet());
+        
+        Set<Integer> nuevosTrabajadores = new HashSet<>(horarioDTO.getTrabajadorIds() != null ? 
+                                         horarioDTO.getTrabajadorIds() : Collections.emptyList());
+
+        if (mismosHorarios && trabajadoresExistentes.equals(nuevosTrabajadores)) {
+            throw new ResponseStatusException(HttpStatus.NOT_MODIFIED);
+        }
 
         // Validar trabajadores
         if (horarioDTO.getTrabajadorIds() != null && !horarioDTO.getTrabajadorIds().isEmpty()) {

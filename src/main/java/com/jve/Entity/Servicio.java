@@ -36,9 +36,6 @@ public class Servicio {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal precio;
 
-    @Column(name = "id_especialidad", nullable = false)
-    private Integer idEspecialidad;
-
     @ManyToMany(mappedBy = "servicios")
     @JsonBackReference
     private List<Usuario> usuarios = new ArrayList<>();

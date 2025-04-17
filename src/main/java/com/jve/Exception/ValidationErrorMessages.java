@@ -62,4 +62,16 @@ public class ValidationErrorMessages {
     public static final String HORARIO_HORA_FIN_REQUERIDA = "La hora de fin es obligatoria";
     public static final String DIA_SEMANA_INVALIDO = "El día de la semana no es válido. Valores permitidos: lunes, martes, miércoles, jueves, viernes, sábado, domingo";
     public static final String ERROR_FORMATO_JSON = "Error en el formato de los datos enviados";
+
+    // Mensajes para Servicio
+    public static final String SERVICIO_NOMBRE_REQUERIDO = "El nombre del servicio es obligatorio";
+    public static final String SERVICIO_DESCRIPCION_REQUERIDA = "La descripción del servicio es obligatoria";
+    public static final String SERVICIO_DURACION_REQUERIDA = "La duración del servicio es obligatoria";
+    public static final String SERVICIO_DURACION_POSITIVA = "La duración debe ser un número positivo";
+    public static final String SERVICIO_PRECIO_REQUERIDO = "El precio del servicio es obligatorio";
+    public static final String SERVICIO_PRECIO_POSITIVO = "El precio debe ser un número positivo";
+    public static final String SERVICIO_NO_ENCONTRADO = "No se encontró el servicio con id: %d";
+    public static final String SERVICIO_NOMBRE_DUPLICADO = "Ya existe un servicio con este nombre";
+    public static final String SERVICIO_NO_CAMBIOS = "No se detectaron cambios en el servicio";
+    public static final String SERVICIOS_NO_ENCONTRADOS = "Uno o más servicios no fueron encontrados";
 } 

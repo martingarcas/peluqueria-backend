@@ -47,7 +47,7 @@ public class HorarioConverter {
             horario.setTrabajadores(dto.getTrabajadorIds().stream()
                 .map(id -> usuarioRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Trabajador no encontrado")))
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toList()));
         }
         
         return horario;

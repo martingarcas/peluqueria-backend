@@ -87,6 +87,14 @@ public class Usuario implements UserDetails {
     )
     private List<Servicio> servicios = new ArrayList<>();
 
+    @ManyToMany
+    @JoinTable(
+        name = "horario_trabajador",
+        joinColumns = @JoinColumn(name = "trabajador_id"),
+        inverseJoinColumns = @JoinColumn(name = "horario_id")
+    )
+    private List<Horario> horarios = new ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         fechaRegistro = new Date();
