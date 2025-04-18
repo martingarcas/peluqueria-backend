@@ -1,24 +1,23 @@
 package com.jve.DTO;
 
 import com.jve.Entity.TipoEstado;
+import com.jve.Exception.ValidationErrorMessages;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class EstadoDTO {
     
     private Integer id;
 
-    @NotBlank(message = "El nombre es obligatorio")
+    @NotBlank(message = ValidationErrorMessages.ESTADO_NOMBRE_REQUERIDO)
     private String nombre;
 
-    @NotNull(message = "El tipo de estado es obligatorio")
+    @NotNull(message = ValidationErrorMessages.ESTADO_TIPO_REQUERIDO)
     private TipoEstado tipoEstado;
 } 

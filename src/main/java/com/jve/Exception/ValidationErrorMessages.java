@@ -44,6 +44,8 @@ public class ValidationErrorMessages {
     // Mensajes para Estado
     public static final String ESTADO_NO_ENCONTRADO = "Estado no encontrado";
     public static final String ESTADO_YA_EXISTE = "Ya existe un estado con ese nombre y tipo";
+    public static final String ESTADO_NOMBRE_REQUERIDO = "El nombre del estado es obligatorio";
+    public static final String ESTADO_TIPO_REQUERIDO = "El tipo de estado es obligatorio";
 
     // Mensajes para Usuario
     public static final String USUARIO_NO_ENCONTRADO = "Usuario no encontrado";
@@ -66,6 +68,7 @@ public class ValidationErrorMessages {
     public static final String CONTRATO_TIPO_NO_VALIDO = "El tipo de contrato no es válido. Los tipos válidos son: fijo, temporal";
     public static final String CONTRATO_TIPO_REQUERIDO = "El tipo de contrato es obligatorio";
     public static final String CONTRATO_FECHA_INICIO_REQUERIDA = "La fecha de inicio es obligatoria";
+    public static final String CONTRATO_DOCUMENTO_REQUERIDO = "El documento del contrato es requerido";
 
     // Mensajes para Horario
     public static final String HORARIO_NO_ENCONTRADO = "El horario no existe";
@@ -74,6 +77,7 @@ public class ValidationErrorMessages {
     public static final String HORARIO_DIA_REQUERIDO = "El día de la semana es obligatorio";
     public static final String HORARIO_HORA_INICIO_REQUERIDA = "La hora de inicio es obligatoria";
     public static final String HORARIO_HORA_FIN_REQUERIDA = "La hora de fin es obligatoria";
+    public static final String HORARIO_NOMBRE_REQUERIDO = "El nombre del horario es obligatorio";
     public static final String DIA_SEMANA_INVALIDO = "El día de la semana no es válido. Valores permitidos: lunes, martes, miércoles, jueves, viernes, sábado, domingo";
     public static final String ERROR_FORMATO_JSON = "Error en el formato de los datos enviados";
     public static final String HORARIOS_NO_ENCONTRADOS = "Uno o más horarios no fueron encontrados";
@@ -96,4 +100,15 @@ public class ValidationErrorMessages {
     public static final String TRABAJADOR_SERVICIOS_REQUERIDOS = "Debe seleccionar al menos un servicio";
     public static final String TRABAJADOR_HORARIOS_REQUERIDOS = "Debe seleccionar al menos un horario";
     public static final String ERROR_VALIDACION = "Error de validación";
+
+    // Mensajes de validación para Usuario
+    public static final String ERROR_USUARIO_EXISTENTE = "Ya existe un usuario con ese email";
+    public static final String ERROR_ROL_INVALIDO = "El rol especificado no es válido";
+    public static final String ERROR_CONTRASENA_INVALIDA = "La contraseña debe tener al menos 6 caracteres";
+    public static final String ERROR_EMAIL_INVALIDO = "El formato del email no es válido";
+    public static final String ERROR_NOMBRE_REQUERIDO = "El nombre es requerido";
+    public static final String ERROR_APELLIDO_REQUERIDO = "El apellido es requerido";
+    public static final String ERROR_EMAIL_REQUERIDO = "El email es requerido";
+    public static final String ERROR_CONTRASENA_REQUERIDA = "La contraseña es requerida";
+    public static final String ERROR_ROL_REQUERIDO = "El rol es requerido";
 } 

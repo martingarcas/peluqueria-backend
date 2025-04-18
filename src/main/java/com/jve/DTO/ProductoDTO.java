@@ -1,25 +1,30 @@
 package com.jve.DTO;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.math.BigDecimal;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import com.jve.Exception.ValidationErrorMessages;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductoDTO {
     private Integer id;
     
     @NotBlank(message = ValidationErrorMessages.PRODUCTO_NOMBRE_REQUERIDO)
+    @Size(min = 3, max = 100, message = "El nombre debe tener entre 3 y 100 caracteres")
     private String nombre;
     
     @NotBlank(message = ValidationErrorMessages.PRODUCTO_DESCRIPCION_REQUERIDA)
+    @Size(min = 10, max = 500, message = "La descripción debe tener entre 10 y 500 caracteres")
     private String descripcion;
     
     @NotNull(message = ValidationErrorMessages.PRODUCTO_PRECIO_REQUERIDO)
