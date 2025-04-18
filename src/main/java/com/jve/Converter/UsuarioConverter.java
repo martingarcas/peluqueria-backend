@@ -3,6 +3,7 @@ package com.jve.Converter;
 import com.jve.DTO.UsuarioDTO;
 import com.jve.DTO.RegistroResponseDTO;
 import com.jve.Entity.Usuario;
+import com.jve.Entity.RolUsuario;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,11 @@ public class UsuarioConverter {
     }
 
     public Usuario toEntity(UsuarioDTO usuarioDTO) {
-        return modelMapper.map(usuarioDTO, Usuario.class);
+        Usuario usuario = modelMapper.map(usuarioDTO, Usuario.class);
+        if (usuarioDTO.getRole() != null) {
+            usuario.setRol(RolUsuario.valueOf(usuarioDTO.getRole().toLowerCase()));
+        }
+        return usuario;
     }
 
     public RegistroResponseDTO toResponseDTO(Usuario usuario) {

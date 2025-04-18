@@ -9,6 +9,8 @@ import jakarta.validation.constraints.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data
 @NoArgsConstructor
@@ -48,6 +50,8 @@ public class UsuarioDTO {
 
     private String role;
     
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @JsonIgnore(value = false)
     private String foto;
     
     private String carrito;
@@ -83,11 +87,11 @@ public class UsuarioDTO {
     // Método para validar si hay modificaciones
     public boolean tieneModificaciones(UsuarioDTO otro) {
         if (otro == null) return true;
-        return !this.nombre.equals(otro.nombre) ||
-               !this.apellidos.equals(otro.apellidos) ||
-               !this.email.equals(otro.email) ||
-               !this.direccion.equals(otro.direccion) ||
-               !this.telefono.equals(otro.telefono) ||
-               (this.role != null && !this.role.equals(otro.role));
+        return !Objects.equals(this.nombre, otro.nombre) ||
+               !Objects.equals(this.apellidos, otro.apellidos) ||
+               !Objects.equals(this.email, otro.email) ||
+               !Objects.equals(this.direccion, otro.direccion) ||
+               !Objects.equals(this.telefono, otro.telefono) ||
+               !Objects.equals(this.role, otro.role);
     }
 } 

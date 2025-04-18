@@ -52,4 +52,8 @@ public class ResponseMessages {
     public static final String SERVICIO_ELIMINADO = "Servicio eliminado exitosamente";
     public static final String SERVICIOS_LISTADOS = "Servicios recuperados exitosamente";
     public static final String SERVICIOS_ASIGNADOS = "Servicios asignados exitosamente al trabajador";
+
+    // Mensajes para Fotos
+    public static final String FOTO_GUARDADA = "Foto guardada exitosamente";
+    public static final String FOTO_ELIMINADA = "Foto eliminada exitosamente";
 } 

@@ -35,6 +35,11 @@ public class ValidationErrorMessages {
     public static final String AUTH_APELLIDOS_REQUERIDOS = "Los apellidos son obligatorios";
     public static final String AUTH_DIRECCION_REQUERIDA = "La dirección es obligatoria";
     public static final String AUTH_TELEFONO_REQUERIDO = "El teléfono es obligatorio";
+    public static final String AUTH_NO_PERMISOS = "No tienes permisos para realizar esta acción";
+    public static final String AUTH_NO_PERMISOS_ROL = "No tienes permisos para cambiar el rol del usuario";
+    public static final String AUTH_NO_PERMISOS_ELIMINAR = "Los trabajadores no pueden eliminar su cuenta";
+    public static final String AUTH_ROL_NO_EXISTE = "El rol especificado no existe. Los roles válidos son: admin, trabajador, cliente";
+    public static final String AUTH_ROL_REQUERIDO = "El rol es obligatorio";
 
     // Mensajes para Estado
     public static final String ESTADO_NO_ENCONTRADO = "Estado no encontrado";
@@ -43,15 +48,24 @@ public class ValidationErrorMessages {
     // Mensajes para Usuario
     public static final String USUARIO_NO_ENCONTRADO = "Usuario no encontrado";
     public static final String USUARIO_NO_ES_TRABAJADOR = "El usuario no es un trabajador";
+    public static final String TRABAJADOR_SIN_CONTRATO = "El trabajador debe tener un contrato asignado";
+    public static final String TRABAJADOR_SIN_SERVICIOS = "El trabajador debe tener al menos un servicio asignado";
+    public static final String TRABAJADOR_SIN_HORARIOS = "El trabajador debe tener al menos un horario asignado";
+    public static final String FOTO_NO_ENCONTRADA = "No se encontró la foto del usuario";
     
     // Mensajes para Contrato
     public static final String CONTRATO_NO_ENCONTRADO = "Contrato no encontrado";
-    public static final String CONTRATO_TEMPORAL_REQUIERE_FECHA_FIN = "Un contrato temporal requiere fecha de finalización";
-    public static final String CONTRATO_FIJO_NO_FECHA_FIN = "Un contrato fijo no debe tener fecha de finalización";
+    public static final String CONTRATO_TEMPORAL_REQUIERE_FECHA_FIN = "Los contratos temporales requieren una fecha de finalización";
+    public static final String CONTRATO_FIJO_NO_FECHA_FIN = "Los contratos fijos no deben tener fecha de finalización";
     public static final String CONTRATO_FECHA_FIN_ANTERIOR_INICIO = "La fecha de fin no puede ser anterior a la fecha de inicio";
     public static final String CONTRATOS_USUARIO_RECUPERADOS = "Contratos del usuario recuperados con éxito";
     public static final String CONTRATO_YA_EXISTE = "El usuario ya tiene un contrato activo o pendiente";
     public static final String CONTRATO_FECHA_INICIO_PASADA = "La fecha de inicio no puede ser una fecha pasada";
+    public static final String CONTRATO_SALARIO_NEGATIVO = "El salario no puede ser un valor negativo";
+    public static final String CONTRATO_SALARIO_REQUERIDO = "El salario es obligatorio";
+    public static final String CONTRATO_TIPO_NO_VALIDO = "El tipo de contrato no es válido. Los tipos válidos son: fijo, temporal";
+    public static final String CONTRATO_TIPO_REQUERIDO = "El tipo de contrato es obligatorio";
+    public static final String CONTRATO_FECHA_INICIO_REQUERIDA = "La fecha de inicio es obligatoria";
 
     // Mensajes para Horario
     public static final String HORARIO_NO_ENCONTRADO = "El horario no existe";
@@ -62,6 +76,7 @@ public class ValidationErrorMessages {
     public static final String HORARIO_HORA_FIN_REQUERIDA = "La hora de fin es obligatoria";
     public static final String DIA_SEMANA_INVALIDO = "El día de la semana no es válido. Valores permitidos: lunes, martes, miércoles, jueves, viernes, sábado, domingo";
     public static final String ERROR_FORMATO_JSON = "Error en el formato de los datos enviados";
+    public static final String HORARIOS_NO_ENCONTRADOS = "Uno o más horarios no fueron encontrados";
 
     // Mensajes para Servicio
     public static final String SERVICIO_NOMBRE_REQUERIDO = "El nombre del servicio es obligatorio";
@@ -74,4 +89,11 @@ public class ValidationErrorMessages {
     public static final String SERVICIO_NOMBRE_DUPLICADO = "Ya existe un servicio con este nombre";
     public static final String SERVICIO_NO_CAMBIOS = "No se detectaron cambios en el servicio";
     public static final String SERVICIOS_NO_ENCONTRADOS = "Uno o más servicios no fueron encontrados";
+
+    // Mensajes para Trabajador
+    public static final String TRABAJADOR_FOTO_REQUERIDA = "La foto del trabajador es requerida";
+    public static final String TRABAJADOR_CONTRATO_REQUERIDO = "El contrato del trabajador es requerido";
+    public static final String TRABAJADOR_SERVICIOS_REQUERIDOS = "Debe seleccionar al menos un servicio";
+    public static final String TRABAJADOR_HORARIOS_REQUERIDOS = "Debe seleccionar al menos un horario";
+    public static final String ERROR_VALIDACION = "Error de validación";
 } 
