@@ -45,7 +45,7 @@ public class ContratoController {
     public ResponseEntity<?> crear(
             @RequestParam("usuarioId") Integer usuarioId,
             @RequestParam("fechaInicioContrato") String fechaInicioContrato,
-            @RequestParam("fechaFinContrato") String fechaFinContrato,
+            @RequestParam(value = "fechaFinContrato", required = false) String fechaFinContrato,
             @RequestParam("tipoContrato") TipoContrato tipoContrato,
             @RequestPart("documento") MultipartFile documento) {
         

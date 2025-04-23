@@ -42,5 +42,5 @@ public class Servicio {
 
     @OneToMany(mappedBy = "servicio")
     @JsonBackReference
-    private List<CitaServicio> citasServicios = new ArrayList<>();
+    private List<Cita> citas = new ArrayList<>();
 } 

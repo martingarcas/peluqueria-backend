@@ -51,6 +51,7 @@ public class ValidationErrorMessages {
     public static final String USUARIO_NO_ENCONTRADO = "Usuario no encontrado";
     public static final String USUARIO_NO_ES_TRABAJADOR = "El usuario no es un trabajador";
     public static final String TRABAJADOR_SIN_CONTRATO = "El trabajador debe tener un contrato asignado";
+    public static final String TRABAJADOR_SIN_CONTRATO_ACTIVO = "El trabajador no tiene un contrato activo";
     public static final String TRABAJADOR_SIN_SERVICIOS = "El trabajador debe tener al menos un servicio asignado";
     public static final String TRABAJADOR_SIN_HORARIOS = "El trabajador debe tener al menos un horario asignado";
     public static final String FOTO_NO_ENCONTRADA = "No se encontró la foto del usuario";
@@ -111,4 +112,23 @@ public class ValidationErrorMessages {
     public static final String ERROR_EMAIL_REQUERIDO = "El email es requerido";
     public static final String ERROR_CONTRASENA_REQUERIDA = "La contraseña es requerida";
     public static final String ERROR_ROL_REQUERIDO = "El rol es requerido";
+
+    // Mensajes para Cita
+    public static final String CITA_SERVICIO_REQUERIDO = "El servicio es obligatorio";
+    public static final String CITA_TRABAJADOR_REQUERIDO = "El trabajador es obligatorio";
+    public static final String CITA_FECHA_REQUERIDA = "La fecha es obligatoria";
+    public static final String CITA_FECHA_PASADA = "La fecha no puede ser anterior a hoy";
+    public static final String CITA_HORA_REQUERIDA = "La hora es obligatoria";
+    public static final String CITA_HORA_INVALIDA = "La hora debe estar dentro del horario del trabajador";
+    public static final String CITA_SOLAPAMIENTO = "El trabajador ya tiene una cita en ese horario";
+    public static final String CITA_USUARIO_SOLAPAMIENTO = "Ya tienes una cita programada en ese horario";
+    public static final String CITA_DURACION_EXCEDE = "La duración del servicio excede el horario disponible";
+    public static final String CITA_TRABAJADOR_NO_DISPONIBLE = "El trabajador no está disponible en ese horario";
+    public static final String CITA_TRABAJADOR_NO_SERVICIO = "El trabajador no ofrece este servicio";
+    public static final String CITA_NO_ENCONTRADA = "No se encontró la cita";
+    public static final String CITA_NO_PERMISOS = "No tienes permisos para gestionar esta cita";
+    public static final String CITA_ESTADO_INVALIDO = "El estado de la cita no es válido";
+    public static final String CITA_YA_CANCELADA = "La cita ya está cancelada";
+    public static final String CITA_YA_COMPLETADA = "La cita ya está completada";
+    public static final String CITA_LISTA_VACIA = "La lista de citas no puede estar vacía";
 } 

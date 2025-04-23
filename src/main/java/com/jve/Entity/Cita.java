@@ -1,17 +1,9 @@
 package com.jve.Entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.util.ArrayList;
+import lombok.*;
 import java.util.Date;
-import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.sql.Time;
 
 @Entity
 @Table(name = "cita")
@@ -20,39 +12,33 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Cita {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
+    
+    @ManyToOne
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
+    
+    @ManyToOne
+    @JoinColumn(name = "id_trabajador", nullable = false)
+    private Usuario trabajador;
+    
+    @ManyToOne
+    @JoinColumn(name = "id_servicio", nullable = false)
+    private Servicio servicio;
+    
     @Column(nullable = false)
     @Temporal(TemporalType.DATE)
     private Date fecha;
-
+    
     @Column(name = "hora_inicio", nullable = false)
-    @Temporal(TemporalType.TIME)
-    private Date horaInicio;
-
+    private Time horaInicio;
+    
     @Column(name = "hora_fin", nullable = false)
-    @Temporal(TemporalType.TIME)
-    private Date horaFin;
-
+    private Time horaFin;
+    
     @ManyToOne
-    @JoinColumn(name = "estado_id", nullable = false)
-    @JsonBackReference
+    @JoinColumn(name = "id_estado", nullable = false)
     private Estado estado;
-
-    @ManyToOne
-    @JoinColumn(name = "id_usuario", nullable = false)
-    @JsonBackReference
-    private Usuario usuario;
-
-    @ManyToOne
-    @JoinColumn(name = "id_trabajador", nullable = false)
-    @JsonBackReference
-    private Usuario trabajador;
-
-    @OneToMany(mappedBy = "cita")
-    @JsonManagedReference
-    private List<CitaServicio> citasServicios = new ArrayList<>();
 } 
