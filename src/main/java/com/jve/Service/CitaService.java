@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.text.SimpleDateFormat;
 import java.sql.Time;
+import java.text.ParseException;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +54,9 @@ public class CitaService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email)
             .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+            
+        // Configurar zona horaria para todas las citas
+        configurarZonaHorariaCitas(citaDTO);
             
         List<Cita> citasCreadas = new ArrayList<>();
         
@@ -624,5 +628,34 @@ public class CitaService {
         responseMap.put("mensaje", "Citas del trabajador recuperadas exitosamente");
         responseMap.put("citas", response);
         return responseMap;
+    }
+
+    // Nuevos métodos auxiliares
+    private void configurarZonaHorariaCitas(CitaDTO citaDTO) {
+        for (CitaDTO.CitaRequest citaRequest : citaDTO.getCitas()) {
+            if (citaRequest.getHoraInicio() != null) {
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(citaRequest.getHoraInicio());
+                cal.setTimeZone(TimeZone.getTimeZone("Europe/Madrid"));
+                citaRequest.setHoraInicio(Time.valueOf(String.format("%02d:%02d:00", 
+                    cal.get(Calendar.HOUR_OF_DAY), 
+                    cal.get(Calendar.MINUTE))));
+            }
+        }
+    }
+
+    public Map<String, Object> obtenerTrabajadoresNoDisponiblesConValidacion(
+            Integer servicioId, String fechaStr, String hora) throws ParseException {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date fecha = dateFormat.parse(fechaStr);
+        return obtenerTrabajadoresDisponiblesParaHora(servicioId, fecha, hora);
+    }
+
+    public Map<String, Object> obtenerDiasNoDisponiblesConValidacion(
+            Integer servicioId, String hora, String fechaInicioStr, String fechaFinStr) throws ParseException {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date fechaInicio = dateFormat.parse(fechaInicioStr);
+        Date fechaFin = dateFormat.parse(fechaFinStr);
+        return obtenerDiasNoDisponiblesParaHora(servicioId, hora, fechaInicio, fechaFin);
     }
 } 

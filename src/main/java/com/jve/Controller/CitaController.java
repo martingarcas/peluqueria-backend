@@ -48,18 +48,6 @@ public class CitaController {
             return ResponseEntity.badRequest().body(response);
         }
         
-        // Configurar zona horaria para todas las citas
-        for (CitaDTO.CitaRequest citaRequest : citaDTO.getCitas()) {
-            if (citaRequest.getHoraInicio() != null) {
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(citaRequest.getHoraInicio());
-                cal.setTimeZone(TimeZone.getTimeZone("Europe/Madrid"));
-                citaRequest.setHoraInicio(Time.valueOf(String.format("%02d:%02d:00", 
-                    cal.get(Calendar.HOUR_OF_DAY), 
-                    cal.get(Calendar.MINUTE))));
-            }
-        }
-        
         return ResponseEntity.ok(citaService.crearCita(citaDTO));
     }
     
@@ -87,10 +75,7 @@ public class CitaController {
         String hora = request.get("hora").toString();
         
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            Date fecha = dateFormat.parse(fechaStr);
-            
-            return ResponseEntity.ok(citaService.obtenerTrabajadoresDisponiblesParaHora(servicioId, fecha, hora));
+            return ResponseEntity.ok(citaService.obtenerTrabajadoresNoDisponiblesConValidacion(servicioId, fechaStr, hora));
         } catch (ParseException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "El formato de fecha debe ser yyyy-MM-dd");
@@ -107,11 +92,8 @@ public class CitaController {
         String fechaFinStr = request.get("fechaFin").toString();
         
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            Date fechaInicio = dateFormat.parse(fechaInicioStr);
-            Date fechaFin = dateFormat.parse(fechaFinStr);
-            
-            return ResponseEntity.ok(citaService.obtenerDiasNoDisponiblesParaHora(servicioId, hora, fechaInicio, fechaFin));
+            return ResponseEntity.ok(citaService.obtenerDiasNoDisponiblesConValidacion(
+                servicioId, hora, fechaInicioStr, fechaFinStr));
         } catch (ParseException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "El formato de fecha debe ser yyyy-MM-dd");
