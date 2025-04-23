@@ -55,4 +55,21 @@ public class CitaDTO {
         
         private String usuarioNombre;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReasignacionRequest {
+        @NotNull(message = ValidationErrorMessages.CITA_TRABAJADOR_REQUERIDO)
+        private Integer trabajadorId;
+
+        @NotNull(message = ValidationErrorMessages.CITA_FECHA_REQUERIDA)
+        @FutureOrPresent(message = ValidationErrorMessages.CITA_FECHA_PASADA)
+        @JsonFormat(pattern = "yyyy-MM-dd", timezone = "Europe/Madrid")
+        private Date fecha;
+
+        @NotNull(message = ValidationErrorMessages.CITA_HORA_REQUERIDA)
+        @JsonFormat(pattern = "HH:mm:ss", timezone = "Europe/Madrid")
+        private Time horaInicio;
+    }
 } 

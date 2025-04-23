@@ -30,7 +30,9 @@ public class CitaService {
             .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
             
         List<Cita> citas;
-        if (usuario.getRol().equals(RolUsuario.trabajador)) {
+        if (usuario.getRol().equals(RolUsuario.admin)) {
+            citas = citaRepository.findAll();
+        } else if (usuario.getRol().equals(RolUsuario.trabajador)) {
             citas = citaRepository.findByTrabajadorId(usuario.getId());
         } else {
             citas = citaRepository.findByUsuarioId(usuario.getId());
@@ -482,5 +484,145 @@ public class CitaService {
         }
 
         return true;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerTrabajadoresDisponibles(Integer servicioId) {
+        // Validar que el servicio existe
+        Servicio servicio = servicioRepository.findById(servicioId)
+            .orElseThrow(() -> new RuntimeException(String.format(ValidationErrorMessages.SERVICIO_NO_ENCONTRADO, servicioId)));
+
+        // Obtener trabajadores que ofrecen el servicio y tienen contrato activo
+        List<Usuario> trabajadoresDisponibles = usuarioRepository.findByServiciosId(servicioId).stream()
+            .filter(t -> t.getRol().equals(RolUsuario.trabajador))
+            .filter(t -> contratoRepository.existsByUsuarioIdAndEstadoNombre(t.getId(), "ACTIVO"))
+            .toList();
+
+        // Convertir a DTO solo la información necesaria
+        List<Map<String, Object>> trabajadoresInfo = trabajadoresDisponibles.stream()
+            .map(t -> {
+                Map<String, Object> info = new HashMap<>();
+                info.put("id", t.getId());
+                info.put("nombre", t.getNombre());
+                info.put("apellidos", t.getApellidos());
+                info.put("foto", t.getFoto());
+                return info;
+            })
+            .toList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Trabajadores disponibles recuperados exitosamente");
+        response.put("trabajadores", trabajadoresInfo);
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerTodasLasCitas() {
+        List<Cita> citas = citaRepository.findAll();
+        List<CitaDTO.CitaRequest> citasDTO = citaConverter.toDtoList(citas);
+        CitaDTO response = new CitaDTO();
+        response.setCitas(citasDTO);
+        
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("mensaje", "Todas las citas recuperadas exitosamente");
+        responseMap.put("citas", response);
+        return responseMap;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerCitaPorId(Integer id) {
+        Cita cita = citaRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.CITA_NO_ENCONTRADA));
+        
+        // Verificar permisos
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+        
+        // Solo el admin, el cliente dueño de la cita o el trabajador asignado pueden verla
+        if (!usuario.getRol().equals(RolUsuario.admin) && 
+            !cita.getUsuario().getId().equals(usuario.getId()) &&
+            !cita.getTrabajador().getId().equals(usuario.getId())) {
+            throw new RuntimeException(ValidationErrorMessages.CITA_NO_PERMISOS);
+        }
+        
+        CitaDTO response = new CitaDTO();
+        response.setCitas(Collections.singletonList(citaConverter.toDto(cita)));
+        
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("mensaje", "Cita recuperada exitosamente");
+        responseMap.put("cita", response);
+        return responseMap;
+    }
+
+    @Transactional
+    public Map<String, Object> reasignarCita(Integer id, CitaDTO.ReasignacionRequest reasignacionRequest) {
+        final Cita citaOriginal = citaRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.CITA_NO_ENCONTRADA));
+        
+        Usuario trabajador = usuarioRepository.findById(reasignacionRequest.getTrabajadorId())
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+        
+        // Validar que el trabajador ofrezca el servicio
+        if (trabajador.getServicios().stream().noneMatch(s -> s.getId().equals(citaOriginal.getServicio().getId()))) {
+            throw new RuntimeException(ValidationErrorMessages.CITA_TRABAJADOR_NO_SERVICIO);
+        }
+        
+        // Crear un CitaRequest temporal para la validación de disponibilidad
+        CitaDTO.CitaRequest citaTemp = new CitaDTO.CitaRequest();
+        citaTemp.setFecha(reasignacionRequest.getFecha());
+        citaTemp.setHoraInicio(reasignacionRequest.getHoraInicio());
+        
+        // Validar disponibilidad del nuevo trabajador
+        validarDisponibilidad(trabajador, citaTemp, citaOriginal.getServicio());
+        
+        // Actualizar la cita
+        citaOriginal.setTrabajador(trabajador);
+        citaOriginal.setFecha(reasignacionRequest.getFecha());
+        citaOriginal.setHoraInicio(reasignacionRequest.getHoraInicio());
+        
+        // Calcular nueva hora fin
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(reasignacionRequest.getHoraInicio());
+        cal.add(Calendar.MINUTE, citaOriginal.getServicio().getDuracion());
+        citaOriginal.setHoraFin(Time.valueOf(String.format("%02d:%02d:00", 
+            cal.get(Calendar.HOUR_OF_DAY), 
+            cal.get(Calendar.MINUTE))));
+        
+        final Cita citaActualizada = citaRepository.save(citaOriginal);
+        
+        CitaDTO response = new CitaDTO();
+        response.setCitas(Collections.singletonList(citaConverter.toDto(citaActualizada)));
+        
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("mensaje", "Cita reasignada exitosamente");
+        responseMap.put("cita", response);
+        return responseMap;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerCitasPorCliente(Integer clienteId) {
+        List<Cita> citas = citaRepository.findByUsuarioId(clienteId);
+        List<CitaDTO.CitaRequest> citasDTO = citaConverter.toDtoList(citas);
+        CitaDTO response = new CitaDTO();
+        response.setCitas(citasDTO);
+        
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("mensaje", "Citas del cliente recuperadas exitosamente");
+        responseMap.put("citas", response);
+        return responseMap;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerCitasPorTrabajador(Integer trabajadorId) {
+        List<Cita> citas = citaRepository.findByTrabajadorId(trabajadorId);
+        List<CitaDTO.CitaRequest> citasDTO = citaConverter.toDtoList(citas);
+        CitaDTO response = new CitaDTO();
+        response.setCitas(citasDTO);
+        
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("mensaje", "Citas del trabajador recuperadas exitosamente");
+        responseMap.put("citas", response);
+        return responseMap;
     }
 } 

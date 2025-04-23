@@ -118,4 +118,35 @@ public class CitaController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+    
+    @GetMapping("/trabajadores-disponibles")
+    public ResponseEntity<Map<String, Object>> obtenerTrabajadoresDisponibles(
+            @RequestParam Integer servicioId) {
+        return ResponseEntity.ok(citaService.obtenerTrabajadoresDisponibles(servicioId));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> obtenerCitaPorId(@PathVariable Integer id) {
+        return ResponseEntity.ok(citaService.obtenerCitaPorId(id));
+    }
+
+    @PutMapping("/{id}/reasignar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> reasignarCita(
+            @PathVariable Integer id,
+            @Valid @RequestBody CitaDTO.ReasignacionRequest reasignacionRequest) {
+        return ResponseEntity.ok(citaService.reasignarCita(id, reasignacionRequest));
+    }
+
+    @GetMapping("/cliente/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> obtenerCitasCliente(@PathVariable Integer id) {
+        return ResponseEntity.ok(citaService.obtenerCitasPorCliente(id));
+    }
+
+    @GetMapping("/trabajador/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> obtenerCitasTrabajador(@PathVariable Integer id) {
+        return ResponseEntity.ok(citaService.obtenerCitasPorTrabajador(id));
+    }
 } 
