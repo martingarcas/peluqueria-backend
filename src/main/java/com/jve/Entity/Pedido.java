@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDateTime;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -38,15 +37,15 @@ public class Pedido {
     @JoinColumn(name = "estado_id", nullable = false)
     private Estado estado;
 
-    @Column(nullable = false)
-    private Double total;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal total;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<PedidoProducto> pedidoProductos = new ArrayList<>();
 
     // Constructor para crear pedidos fácilmente
-    public Pedido(Usuario usuario, Estado estado, Double total) {
+    public Pedido(Usuario usuario, Estado estado, BigDecimal total) {
         this.fechaPedido = LocalDateTime.now();
         this.usuario = usuario;
         this.estado = estado;

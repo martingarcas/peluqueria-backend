@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface EstadoRepository extends JpaRepository<Estado, Integer> {
     List<Estado> findByTipoEstado(TipoEstado tipo);
     Optional<Estado> findByNombreAndTipoEstado(String nombre, TipoEstado tipo);
+    boolean existsByNombreAndTipoEstado(String nombre, TipoEstado tipoEstado);
 } 

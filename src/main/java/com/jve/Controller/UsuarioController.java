@@ -8,6 +8,11 @@ import com.jve.Converter.UsuarioConverter;
 import com.jve.Entity.RolUsuario;
 import com.jve.Entity.TipoContrato;
 import com.jve.Exception.ValidationErrorMessages;
+import com.jve.Entity.Usuario;
+import com.jve.Repository.UsuarioRepository;
+import com.jve.Entity.Producto;
+import com.jve.Repository.ProductoRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +39,10 @@ import java.util.UUID;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Iterator;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -43,6 +52,9 @@ public class UsuarioController {
     private final UsuarioService usuarioService;
     private final UsuarioConverter usuarioConverter;
     private final String UPLOAD_DIR = "uploads/users/";
+    private final UsuarioRepository usuarioRepository;
+    private final ProductoRepository productoRepository;
+    private final ObjectMapper objectMapper;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -470,5 +482,163 @@ public class UsuarioController {
         } catch (IOException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/carrito")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<Map<String, Object>> obtenerCarrito() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+
+        // Si el carrito es null, inicializarlo como array vacío
+        if (usuario.getCarrito() == null) {
+            usuario.setCarrito("[]");
+            usuarioRepository.save(usuario);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Carrito recuperado exitosamente");
+        response.put("carrito", usuario.getCarrito());
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/carrito")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<Map<String, Object>> actualizarCarrito(@RequestBody List<Map<String, Object>> nuevosProdutos) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+        
+        if (!usuario.getRol().equals(RolUsuario.cliente)) {
+            throw new RuntimeException("Solo los clientes pueden modificar el carrito");
+        }
+
+        try {
+            // Obtener el carrito actual
+            List<Map<String, Object>> carritoActual = new ArrayList<>();
+            if (usuario.getCarrito() != null && !usuario.getCarrito().equals("[]")) {
+                carritoActual = objectMapper.readValue(usuario.getCarrito(), 
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class));
+            }
+
+            // Por cada nuevo producto
+            for (Map<String, Object> nuevoItem : nuevosProdutos) {
+                // Validar que solo vengan los campos permitidos
+                Set<String> camposPermitidos = Set.of("productoId", "cantidad");
+                Set<String> camposRecibidos = nuevoItem.keySet();
+                
+                Set<String> camposNoPermitidos = new HashSet<>(camposRecibidos);
+                camposNoPermitidos.removeAll(camposPermitidos);
+                
+                if (!camposNoPermitidos.isEmpty()) {
+                    throw new RuntimeException("Campos no permitidos en el carrito: " + String.join(", ", camposNoPermitidos) + 
+                                            ". Solo se permiten: productoId y cantidad");
+                }
+
+                // Validar que el item tenga los campos necesarios
+                if (!nuevoItem.containsKey("productoId") || !nuevoItem.containsKey("cantidad")) {
+                    throw new RuntimeException("Cada item del carrito debe tener productoId y cantidad");
+                }
+
+                Integer productoId = ((Number) nuevoItem.get("productoId")).intValue();
+                Integer cantidad = ((Number) nuevoItem.get("cantidad")).intValue();
+
+                // Validar que el producto existe
+                Producto producto = productoRepository.findById(productoId)
+                    .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + productoId));
+
+                // Buscar si el producto ya existe en el carrito
+                boolean productoEncontrado = false;
+                Iterator<Map<String, Object>> iterator = carritoActual.iterator();
+                
+                while (iterator.hasNext()) {
+                    Map<String, Object> itemExistente = iterator.next();
+                    if (itemExistente.get("productoId").equals(productoId)) {
+                        productoEncontrado = true;
+                        int cantidadActual = ((Number) itemExistente.get("cantidad")).intValue();
+                        
+                        if (cantidad == 0) {
+                            // Si la cantidad es 0, eliminar el producto
+                            iterator.remove();
+                        } else if (cantidad < 0) {
+                            // Si la cantidad es negativa, restar del total
+                            int cantidadARestar = Math.abs(cantidad);
+                            int nuevaCantidad = cantidadActual - cantidadARestar;
+                            
+                            if (nuevaCantidad <= 0) {
+                                // Si la nueva cantidad es 0 o negativa, eliminar el producto
+                                iterator.remove();
+                            } else {
+                                // Actualizar la cantidad
+                                itemExistente.put("cantidad", nuevaCantidad);
+                            }
+                        } else {
+                            // Si la cantidad es positiva, sumar al total
+                            int cantidadTotal = cantidadActual + cantidad;
+                            
+                            // Validar stock para la cantidad total
+                            if (producto.getStock() < cantidadTotal) {
+                                throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre());
+                            }
+                            
+                            itemExistente.put("cantidad", cantidadTotal);
+                        }
+                        break;
+                    }
+                }
+
+                // Si el producto no existía y la cantidad es positiva, añadirlo al carrito
+                if (!productoEncontrado && cantidad > 0) {
+                    // Validar stock
+                    if (producto.getStock() < cantidad) {
+                        throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre());
+                    }
+
+                    Map<String, Object> nuevoItemValidado = new HashMap<>();
+                    nuevoItemValidado.put("productoId", productoId);
+                    nuevoItemValidado.put("nombreProducto", producto.getNombre());
+                    nuevoItemValidado.put("cantidad", cantidad);
+                    nuevoItemValidado.put("precioUnitario", producto.getPrecio());
+                    carritoActual.add(nuevoItemValidado);
+                }
+            }
+
+            // Convertir a JSON sin formato
+            String carritoJson = objectMapper.writeValueAsString(carritoActual);
+            
+            // Actualizar carrito del usuario
+            usuario.setCarrito(carritoJson);
+            usuarioRepository.save(usuario);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Carrito actualizado exitosamente");
+            response.put("carrito", carritoJson);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Error al actualizar el carrito: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @DeleteMapping("/carrito")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<Map<String, Object>> vaciarCarrito() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+        
+        if (!usuario.getRol().equals(RolUsuario.cliente)) {
+            throw new RuntimeException("Solo los clientes pueden vaciar el carrito");
+        }
+
+        usuario.setCarrito("[]");
+        usuarioRepository.save(usuario);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Carrito vaciado exitosamente");
+        return ResponseEntity.ok(response);
     }
 } 
