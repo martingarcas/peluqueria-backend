@@ -1,11 +1,13 @@
 package com.jve.Service;
 
 import com.jve.DTO.UsuarioDTO;
+import com.jve.DTO.ContratoDTO;
 import com.jve.DTO.RegistroResponseDTO;
 import com.jve.Entity.Usuario;
 import com.jve.Entity.RolUsuario;
 import com.jve.Entity.Servicio;
 import com.jve.Entity.Horario;
+import com.jve.Entity.TipoContrato;
 import com.jve.Repository.UsuarioRepository;
 import com.jve.Repository.ServicioRepository;
 import com.jve.Repository.HorarioRepository;
@@ -23,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -301,5 +304,166 @@ public class UsuarioService {
         if (horariosEncontrados.size() != horariosIds.size()) {
             throw new RuntimeException(ValidationErrorMessages.HORARIOS_NO_ENCONTRADOS);
         }
+    }
+
+    public Map<String, String> validarDatosTrabajador(
+            UsuarioDTO usuarioDTO, 
+            MultipartFile foto, 
+            MultipartFile documentoContrato,
+            String fechaInicioContrato,
+            String fechaFinContrato) {
+        
+        Map<String, String> errores = new HashMap<>();
+
+        // Validar campos básicos del usuario
+        if (usuarioDTO.getNombre() == null || usuarioDTO.getNombre().trim().isEmpty()) {
+            errores.put("nombre", ValidationErrorMessages.AUTH_NOMBRE_REQUERIDO);
+        } else if (usuarioDTO.getNombre().length() < 2 || usuarioDTO.getNombre().length() > 50) {
+            errores.put("nombre", "El nombre debe tener entre 2 y 50 caracteres");
+        }
+
+        if (usuarioDTO.getApellidos() == null || usuarioDTO.getApellidos().trim().isEmpty()) {
+            errores.put("apellidos", ValidationErrorMessages.AUTH_APELLIDOS_REQUERIDOS);
+        } else if (usuarioDTO.getApellidos().length() < 2 || usuarioDTO.getApellidos().length() > 100) {
+            errores.put("apellidos", "Los apellidos deben tener entre 2 y 100 caracteres");
+        }
+
+        if (usuarioDTO.getEmail() == null || usuarioDTO.getEmail().trim().isEmpty()) {
+            errores.put("email", ValidationErrorMessages.AUTH_EMAIL_REQUERIDO);
+        } else if (!usuarioDTO.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            errores.put("email", ValidationErrorMessages.AUTH_EMAIL_FORMATO);
+        }
+
+        if (usuarioDTO.getDireccion() == null || usuarioDTO.getDireccion().trim().isEmpty()) {
+            errores.put("direccion", ValidationErrorMessages.AUTH_DIRECCION_REQUERIDA);
+        } else if (usuarioDTO.getDireccion().length() < 5 || usuarioDTO.getDireccion().length() > 200) {
+            errores.put("direccion", "La dirección debe tener entre 5 y 200 caracteres");
+        }
+
+        if (usuarioDTO.getTelefono() == null || usuarioDTO.getTelefono().trim().isEmpty()) {
+            errores.put("telefono", ValidationErrorMessages.AUTH_TELEFONO_REQUERIDO);
+        } else if (!usuarioDTO.getTelefono().matches("^[0-9]{9}$")) {
+            errores.put("telefono", "El teléfono debe tener 9 dígitos");
+        }
+
+        if (usuarioDTO.getPassword() == null || usuarioDTO.getPassword().trim().isEmpty()) {
+            errores.put("password", ValidationErrorMessages.AUTH_PASSWORD_REQUERIDO);
+        } else if (!usuarioDTO.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")) {
+            errores.put("password", ValidationErrorMessages.AUTH_PASSWORD_FORMATO);
+        }
+
+        // Validar archivos obligatorios
+        if (foto == null || foto.isEmpty()) {
+            errores.put("foto", ValidationErrorMessages.TRABAJADOR_FOTO_REQUERIDA);
+        }
+
+        if (documentoContrato == null || documentoContrato.isEmpty()) {
+            errores.put("documentoContrato", ValidationErrorMessages.TRABAJADOR_CONTRATO_REQUERIDO);
+        }
+
+        // Validar fechas del contrato
+        if (fechaInicioContrato == null || fechaInicioContrato.trim().isEmpty()) {
+            errores.put("fechaInicioContrato", ValidationErrorMessages.CONTRATO_FECHA_INICIO_REQUERIDA);
+        } else {
+            try {
+                java.sql.Date.valueOf(fechaInicioContrato);
+            } catch (IllegalArgumentException e) {
+                errores.put("fechaInicioContrato", "El formato de la fecha debe ser YYYY-MM-DD");
+            }
+        }
+
+        // Validar campos del contrato
+        if (usuarioDTO.getContrato() == null) {
+            errores.put("tipoContrato", ValidationErrorMessages.CONTRATO_TIPO_REQUERIDO);
+            errores.put("salario", ValidationErrorMessages.CONTRATO_SALARIO_REQUERIDO);
+        } else {
+            // Validar tipo de contrato
+            if (usuarioDTO.getContrato().getTipoContrato() == null) {
+                errores.put("tipoContrato", ValidationErrorMessages.CONTRATO_TIPO_REQUERIDO);
+            }
+
+            // Validar salario
+            if (usuarioDTO.getContrato().getSalario() == null) {
+                errores.put("salario", ValidationErrorMessages.CONTRATO_SALARIO_REQUERIDO);
+            } else if (usuarioDTO.getContrato().getSalario().compareTo(BigDecimal.ZERO) <= 0) {
+                errores.put("salario", ValidationErrorMessages.CONTRATO_SALARIO_NEGATIVO);
+            }
+
+            // Validar fecha fin para contratos temporales
+            if (TipoContrato.temporal.name().equalsIgnoreCase(usuarioDTO.getContrato().getTipoContrato().toString())) {
+                if (fechaFinContrato == null || fechaFinContrato.trim().isEmpty()) {
+                    errores.put("fechaFinContrato", ValidationErrorMessages.CONTRATO_TEMPORAL_REQUIERE_FECHA_FIN);
+                }
+            }
+        }
+
+        // Validar servicios y horarios
+        List<Integer> serviciosIds = usuarioDTO.getServiciosIds();
+        List<Integer> horariosIds = usuarioDTO.getHorariosIds();
+
+        if (serviciosIds == null || serviciosIds.isEmpty()) {
+            errores.put("serviciosIds", ValidationErrorMessages.TRABAJADOR_SERVICIOS_REQUERIDOS);
+        } else {
+            try {
+                validarServiciosExisten(serviciosIds);
+            } catch (RuntimeException e) {
+                errores.put("serviciosIds", ValidationErrorMessages.SERVICIOS_NO_ENCONTRADOS);
+            }
+        }
+
+        if (horariosIds == null || horariosIds.isEmpty()) {
+            errores.put("horariosIds", ValidationErrorMessages.TRABAJADOR_HORARIOS_REQUERIDOS);
+        } else {
+            try {
+                validarHorariosExisten(horariosIds);
+            } catch (RuntimeException e) {
+                errores.put("horariosIds", ValidationErrorMessages.HORARIOS_NO_ENCONTRADOS);
+            }
+        }
+
+        return errores;
+    }
+
+    @Transactional
+    public String updateFoto(Integer id, MultipartFile file) throws IOException {
+        // Eliminar foto antigua si existe
+        deleteFoto(id);
+
+        // Crear directorio si no existe
+        Path uploadPath = Paths.get(UPLOAD_DIR);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        // Generar nombre único para el archivo
+        String fileName = id + "_" + UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        Path filePath = uploadPath.resolve(fileName);
+
+        // Guardar archivo
+        Files.copy(file.getInputStream(), filePath);
+
+        // Actualizar URL de la foto en el usuario
+        String fileUrl = "/uploads/users/" + fileName;
+        updateFotoUrl(id, fileUrl);
+
+        return fileUrl;
+    }
+
+    public byte[] getFotoBytes(Integer id) throws IOException {
+        String fotoUrl = getFotoUrl(id);
+        if (fotoUrl == null || fotoUrl.isEmpty()) {
+            throw new ResourceNotFoundException("Foto no encontrada");
+        }
+
+        Path filePath = Paths.get(fotoUrl.replace("/uploads/", ""));
+        return Files.readAllBytes(filePath);
+    }
+
+    public byte[] getImageBytes(String filename) throws IOException {
+        Path imagePath = Paths.get(UPLOAD_DIR + filename);
+        if (!Files.exists(imagePath)) {
+            throw new ResourceNotFoundException("Imagen no encontrada");
+        }
+        return Files.readAllBytes(imagePath);
     }
 } 

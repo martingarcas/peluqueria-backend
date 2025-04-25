@@ -7,9 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.sql.Time;
 
 @Repository
@@ -25,7 +23,7 @@ public interface HorarioRepository extends JpaRepository<Horario, Integer> {
            "AND h.diaSemana = :diaSemana " +
            "AND h.horaInicio < :horaFin " +
            "AND h.horaFin > :horaInicio")
-    boolean existsByTrabajadoresAndDiaSemanaAndHoraInicioLessThanAndHoraFinGreaterThan(
+    boolean isHorarioDisponible(
         @Param("trabajadorId") Integer trabajadorId, 
         @Param("diaSemana") DiaSemana diaSemana, 
         @Param("horaFin") Time horaFin, 
@@ -38,7 +36,7 @@ public interface HorarioRepository extends JpaRepository<Horario, Integer> {
            "AND h.horaInicio < :horaFin " +
            "AND h.horaFin > :horaInicio " +
            "AND h.id != :horarioId")
-    boolean existsByTrabajadoresAndDiaSemanaAndHoraInicioLessThanAndHoraFinGreaterThanAndIdNot(
+    boolean isHorarioDisponibleParaActualizacion(
         @Param("trabajadorId") Integer trabajadorId, 
         @Param("diaSemana") DiaSemana diaSemana, 
         @Param("horaFin") Time horaFin, 

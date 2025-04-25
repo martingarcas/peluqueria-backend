@@ -46,7 +46,7 @@ public class HorarioService {
                 }
 
                 // Validar solapamiento para cada trabajador
-                if (horarioRepository.existsByTrabajadoresAndDiaSemanaAndHoraInicioLessThanAndHoraFinGreaterThan(
+                if (horarioRepository.isHorarioDisponible(
                         trabajadorId,
                         horarioDTO.getDiaSemana(),
                         horarioDTO.getHoraFin(),
@@ -130,7 +130,7 @@ public class HorarioService {
                 }
 
                 // Validar solapamiento para cada trabajador
-                if (horarioRepository.existsByTrabajadoresAndDiaSemanaAndHoraInicioLessThanAndHoraFinGreaterThanAndIdNot(
+                if (horarioRepository.isHorarioDisponibleParaActualizacion(
                         trabajadorId,
                         horarioDTO.getDiaSemana(),
                         horarioDTO.getHoraFin(),

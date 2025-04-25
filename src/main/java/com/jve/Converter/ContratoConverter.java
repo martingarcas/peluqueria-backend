@@ -7,7 +7,6 @@ import com.jve.Entity.TipoEstado;
 import com.jve.Entity.Usuario;
 import com.jve.Repository.EstadoRepository;
 import com.jve.Repository.UsuarioRepository;
-import com.jve.Exception.ValidationErrorMessages;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 

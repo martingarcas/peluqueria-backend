@@ -1,7 +1,6 @@
 package com.jve.DTO;
 
 import com.jve.Exception.ValidationErrorMessages;
-import com.jve.Entity.RolUsuario;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -10,15 +9,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Objects;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UsuarioDTO {
     private Integer id;
-    
-    private String username;
 
     @NotBlank(message = ValidationErrorMessages.AUTH_NOMBRE_REQUERIDO)
     @Size(min = 2, max = 50, message = "El nombre debe tener entre 2 y 50 caracteres")
@@ -51,9 +47,9 @@ public class UsuarioDTO {
     private String role;
     
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    @JsonIgnore(value = false)
     private String foto;
     
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String carrito;
 
     // Campos específicos para trabajadores

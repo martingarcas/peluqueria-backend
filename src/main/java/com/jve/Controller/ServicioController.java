@@ -2,7 +2,6 @@ package com.jve.Controller;
 
 import com.jve.DTO.ServicioDTO;
 import com.jve.Service.ServicioService;
-import com.jve.Exception.ResponseMessages;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/servicios")
@@ -29,12 +29,13 @@ public class ServicioController {
     public ResponseEntity<Map<String, Object>> crear(@Valid @RequestBody ServicioDTO servicioDTO, BindingResult result) {
         if (result.hasErrors()) {
             Map<String, Object> response = new HashMap<>();
-            Map<String, String> errores = new HashMap<>();
-            result.getFieldErrors().forEach(error -> 
-                errores.put(error.getField(), error.getDefaultMessage())
-            );
-            response.put("error", "Error de validación");
-            response.put("detalles", errores);
+            Map<String, String> errores = result.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    error -> error.getField(),
+                    error -> error.getDefaultMessage()
+                ));
+            response.put("mensaje", "Error de validación");
+            response.put("errores", errores);
             return ResponseEntity.badRequest().body(response);
         }
 
@@ -42,7 +43,7 @@ public class ServicioController {
             return new ResponseEntity<>(servicioService.crear(servicioDTO), HttpStatus.CREATED);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
+            response.put("mensaje", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
@@ -53,7 +54,7 @@ public class ServicioController {
             return ResponseEntity.ok(servicioService.obtenerPorId(id));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
+            response.put("mensaje", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
@@ -64,7 +65,7 @@ public class ServicioController {
             return ResponseEntity.ok(servicioService.listarTodos());
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
+            response.put("mensaje", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
@@ -75,25 +76,26 @@ public class ServicioController {
             return ResponseEntity.ok(servicioService.listarPorTrabajador(trabajadorId));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
+            response.put("mensaje", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> actualizar(
+    public ResponseEntity<Map<String, Object>> actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody ServicioDTO servicioDTO,
             BindingResult result) {
         if (result.hasErrors()) {
             Map<String, Object> response = new HashMap<>();
-            Map<String, String> errores = new HashMap<>();
-            result.getFieldErrors().forEach(error -> 
-                errores.put(error.getField(), error.getDefaultMessage())
-            );
-            response.put("error", "Error de validación");
-            response.put("detalles", errores);
+            Map<String, String> errores = result.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    error -> error.getField(),
+                    error -> error.getDefaultMessage()
+                ));
+            response.put("mensaje", "Error de validación");
+            response.put("errores", errores);
             return ResponseEntity.badRequest().body(response);
         }
 
@@ -104,7 +106,9 @@ public class ServicioController {
             if (ex.getStatusCode() == HttpStatus.NOT_MODIFIED) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
             }
-            throw ex;
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", ex.getReason());
+            return ResponseEntity.status(ex.getStatusCode()).body(response);
         }
     }
 
@@ -115,7 +119,7 @@ public class ServicioController {
             return ResponseEntity.ok(servicioService.eliminar(id));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
+            response.put("mensaje", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
@@ -129,8 +133,9 @@ public class ServicioController {
             Map<String, Object> response = servicioService.asignarServiciosATrabajador(trabajadorId, serviciosIds);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            Map<String, Object> errorResponse = Map.of("error", e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 } 

@@ -3,18 +3,16 @@ package com.jve.Controller;
 import com.jve.DTO.EstadoDTO;
 import com.jve.Entity.TipoEstado;
 import com.jve.Service.EstadoService;
-import com.jve.Exception.ResponseMessages;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/estados")
@@ -27,82 +25,102 @@ public class EstadoController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> obtenerEstados(
             @RequestParam(required = false) String tipo) {
-        if (tipo != null) {
-            try {
+        try {
+            if (tipo != null) {
                 TipoEstado.valueOf(tipo);
                 return ResponseEntity.ok(estadoService.obtenerPorTipo(tipo));
-            } catch (IllegalArgumentException e) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("error", "El tipo de estado debe ser uno de: CITA, CONTRATO, PEDIDO");
-                return ResponseEntity.badRequest().body(response);
             }
+            return ResponseEntity.ok(estadoService.obtenerTodos());
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "El tipo de estado debe ser uno de: CITA, CONTRATO, PEDIDO");
+            return ResponseEntity.badRequest().body(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
-        return ResponseEntity.ok(estadoService.obtenerTodos());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> obtenerPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(estadoService.obtenerPorId(id));
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        Map<String, Object> response = new HashMap<>();
-        if (e.getMessage().contains("TipoEstado")) {
-            response.put("error", "El tipo de estado debe ser uno de: CITA, CONTRATO, PEDIDO");
-        } else {
-            response.put("error", "Error en el formato de la petición");
+        try {
+            Map<String, Object> response = estadoService.obtenerPorId(id);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
-        return ResponseEntity.badRequest().body(response);
     }
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> crear(
             @Valid @RequestBody EstadoDTO estadoDTO,
-            BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
+            BindingResult result) {
+        
+        if (result.hasErrors()) {
             Map<String, Object> response = new HashMap<>();
-            Map<String, String> errores = new HashMap<>();
-            bindingResult.getFieldErrors().forEach(error -> 
-                errores.put(error.getField(), error.getDefaultMessage())
-            );
-            response.put("error", "Error de validación");
-            response.put("detalles", errores);
+            Map<String, String> errores = result.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    error -> error.getField(),
+                    error -> error.getDefaultMessage()
+                ));
+            response.put("mensaje", "Error de validación");
+            response.put("errores", errores);
             return ResponseEntity.badRequest().body(response);
         }
-        return ResponseEntity.ok(estadoService.crear(estadoDTO));
+
+        try {
+            Map<String, Object> response = estadoService.crear(estadoDTO);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody EstadoDTO estadoDTO,
-            BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
+            BindingResult result) {
+        
+        if (result.hasErrors()) {
             Map<String, Object> response = new HashMap<>();
-            Map<String, String> errores = new HashMap<>();
-            bindingResult.getFieldErrors().forEach(error -> 
-                errores.put(error.getField(), error.getDefaultMessage())
-            );
-            response.put("error", "Error de validación");
-            response.put("detalles", errores);
+            Map<String, String> errores = result.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    error -> error.getField(),
+                    error -> error.getDefaultMessage()
+                ));
+            response.put("mensaje", "Error de validación");
+            response.put("errores", errores);
             return ResponseEntity.badRequest().body(response);
         }
+
         try {
             Map<String, Object> response = estadoService.actualizar(id, estadoDTO);
-            if (response.get("mensaje").equals(ResponseMessages.NO_CAMBIOS_NECESARIOS)) {
+            if (response.get("mensaje").equals("No se requieren cambios, el estado ya existe con los mismos datos")) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
             }
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
+            response.put("mensaje", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> eliminar(@PathVariable Integer id) {
-        return ResponseEntity.ok(estadoService.eliminar(id));
+        try {
+            Map<String, Object> response = estadoService.eliminar(id);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
     }
 } 

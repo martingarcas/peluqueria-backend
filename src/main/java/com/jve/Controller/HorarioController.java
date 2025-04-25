@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/horarios")
@@ -26,66 +27,100 @@ public class HorarioController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> listarTodos() {
-        return ResponseEntity.ok(horarioService.listarTodos());
+        try {
+            Map<String, Object> response = horarioService.listarTodos();
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> obtenerPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(horarioService.obtenerPorId(id));
+        try {
+            Map<String, Object> response = horarioService.obtenerPorId(id);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> crear(@Valid @RequestBody HorarioDTO horarioDTO, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
+    public ResponseEntity<Map<String, Object>> crear(
+            @Valid @RequestBody HorarioDTO horarioDTO,
+            BindingResult result) {
+        
+        if (result.hasErrors()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", "Error de validación");
-            response.put("detalles", bindingResult.getFieldErrors().stream()
-                .map(error -> error.getDefaultMessage())
-                .toList());
+            Map<String, String> errores = result.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    error -> error.getField(),
+                    error -> error.getDefaultMessage()
+                ));
+            response.put("mensaje", "Error de validación");
+            response.put("errores", errores);
             return ResponseEntity.badRequest().body(response);
         }
 
         try {
-            return ResponseEntity.ok(horarioService.crear(horarioDTO));
+            Map<String, Object> response = horarioService.crear(horarioDTO);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
+            response.put("mensaje", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> actualizar(
+    public ResponseEntity<Map<String, Object>> actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody HorarioDTO horarioDTO,
-            BindingResult bindingResult) {
+            BindingResult result) {
         
-        if (bindingResult.hasErrors()) {
+        if (result.hasErrors()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", "Error de validación");
-            response.put("detalles", bindingResult.getFieldErrors().stream()
-                .map(error -> error.getDefaultMessage())
-                .toList());
+            Map<String, String> errores = result.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    error -> error.getField(),
+                    error -> error.getDefaultMessage()
+                ));
+            response.put("mensaje", "Error de validación");
+            response.put("errores", errores);
             return ResponseEntity.badRequest().body(response);
         }
 
         try {
-            return ResponseEntity.ok(horarioService.actualizar(id, horarioDTO));
+            Map<String, Object> response = horarioService.actualizar(id, horarioDTO);
+            return ResponseEntity.ok(response);
         } catch (ResponseStatusException ex) {
             if (ex.getStatusCode() == HttpStatus.NOT_MODIFIED) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
             }
-            throw ex;
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", ex.getReason());
+            return ResponseEntity.status(ex.getStatusCode()).body(response);
         }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> eliminar(@PathVariable Integer id) {
-        return ResponseEntity.ok(horarioService.eliminar(id));
+        try {
+            Map<String, Object> response = horarioService.eliminar(id);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

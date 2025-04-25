@@ -28,16 +28,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
-import java.util.UUID;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Email;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Set;
@@ -59,25 +53,31 @@ public class UsuarioController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getAllUsuarios() {
-        return ResponseEntity.ok(usuarioService.getAllUsuarios());
+        try {
+            return ResponseEntity.ok(usuarioService.getAllUsuarios());
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getUsuarioById(@PathVariable Integer id) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = auth.getName();
-        boolean isAdmin = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-
-        // Verificar permisos
-        if (!isAdmin && !usuarioService.isOwnProfile(id, userEmail)) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", "No tienes permisos para ver este perfil");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-
         try {
-            return ResponseEntity.ok(usuarioService.getUsuarioById(id));
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String userEmail = auth.getName();
+            boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            if (!isAdmin && !usuarioService.isOwnProfile(id, userEmail)) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("mensaje", ValidationErrorMessages.AUTH_NO_PERMISOS);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            Map<String, Object> response = usuarioService.getUsuarioById(id);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
@@ -87,19 +87,22 @@ public class UsuarioController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createUsuario(@Valid @RequestBody UsuarioDTO usuarioDTO, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
+    public ResponseEntity<Map<String, Object>> createUsuario(
+            @Valid @RequestBody UsuarioDTO usuarioDTO,
+            BindingResult result) {
+        
+        if (result.hasErrors()) {
             Map<String, Object> response = new HashMap<>();
-            Map<String, String> errores = new HashMap<>();
-            bindingResult.getFieldErrors().forEach(error -> 
-                errores.put(error.getField(), error.getDefaultMessage())
-            );
-            response.put("mensaje", "Error de validación");
+            Map<String, String> errores = result.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    error -> error.getField(),
+                    error -> error.getDefaultMessage()
+                ));
+            response.put("mensaje", ValidationErrorMessages.ERROR_VALIDACION);
             response.put("errores", errores);
             return ResponseEntity.badRequest().body(response);
         }
 
-        // Validar que no se intente crear un trabajador sin los archivos necesarios
         if (usuarioDTO.getRole() != null && 
             RolUsuario.trabajador.name().equalsIgnoreCase(usuarioDTO.getRole())) {
             Map<String, Object> response = new HashMap<>();
@@ -414,73 +417,61 @@ public class UsuarioController {
     }
 
     @PostMapping("/{id}/foto")
-    public ResponseEntity<String> uploadFoto(@PathVariable Integer id, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadFoto(
+            @PathVariable Integer id, 
+            @RequestParam("file") MultipartFile file) {
         try {
-            // Eliminar foto antigua si existe
-            usuarioService.deleteFoto(id);
-
-            // Crear directorio si no existe
-            Path uploadPath = Paths.get(UPLOAD_DIR);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            // Generar nombre único para el archivo
-            String fileName = id + "_" + UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            Path filePath = uploadPath.resolve(fileName);
-
-            // Guardar archivo
-            Files.copy(file.getInputStream(), filePath);
-
-            // Actualizar URL de la foto en el usuario
-            String fileUrl = "/uploads/users/" + fileName;
-            usuarioService.updateFotoUrl(id, fileUrl);
-
-            return ResponseEntity.ok(fileUrl);
+            String fileUrl = usuarioService.updateFoto(id, file);
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Foto actualizada correctamente");
+            response.put("url", fileUrl);
+            return ResponseEntity.ok(response);
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body("Error al subir la imagen: " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Error al subir la imagen: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
     @GetMapping("/{id}/foto")
-    public ResponseEntity<byte[]> getFoto(@PathVariable Integer id) {
+    public ResponseEntity<?> getFoto(@PathVariable Integer id) {
         try {
-            String fotoUrl = usuarioService.getFotoUrl(id);
-            if (fotoUrl == null || fotoUrl.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            Path filePath = Paths.get(fotoUrl.replace("/uploads/", ""));
-            byte[] image = Files.readAllBytes(filePath);
-
+            byte[] image = usuarioService.getFotoBytes(id);
             return ResponseEntity.ok()
                     .contentType(MediaType.IMAGE_JPEG)
                     .body(image);
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().build();
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Error al obtener la imagen: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
     @DeleteMapping("/{id}/foto")
-    public ResponseEntity<Void> deleteFoto(@PathVariable Integer id) {
+    public ResponseEntity<Map<String, Object>> deleteFoto(@PathVariable Integer id) {
         try {
             usuarioService.deleteFoto(id);
-            return ResponseEntity.ok().build();
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Foto eliminada correctamente");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Error al eliminar la imagen: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 
-    @GetMapping(value = "/imagen/{filename:.+}", produces = MediaType.IMAGE_JPEG_VALUE)
-    public ResponseEntity<byte[]> getImage(@PathVariable String filename) {
+    @GetMapping(value = "/imagen/{filename:.+}")
+    public ResponseEntity<?> getImage(@PathVariable String filename) {
         try {
-            Path imagePath = Paths.get("uploads/users/" + filename);
-            byte[] imageBytes = Files.readAllBytes(imagePath);
+            byte[] imageBytes = usuarioService.getImageBytes(filename);
             return ResponseEntity.ok()
                     .contentType(MediaType.IMAGE_JPEG)
                     .body(imageBytes);
         } catch (IOException e) {
-            return ResponseEntity.notFound().build();
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Error al obtener la imagen: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 

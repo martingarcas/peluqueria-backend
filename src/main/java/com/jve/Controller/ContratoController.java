@@ -5,6 +5,7 @@ import com.jve.Entity.TipoContrato;
 import com.jve.Service.ContratoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/contratos")
@@ -25,24 +27,45 @@ public class ContratoController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> obtenerTodos() {
-        return ResponseEntity.ok(contratoService.obtenerTodos());
+        try {
+            Map<String, Object> response = contratoService.obtenerTodos();
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> obtenerPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(contratoService.obtenerPorId(id));
+        try {
+            Map<String, Object> response = contratoService.obtenerPorId(id);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
     }
 
     @GetMapping("/usuario/{usuarioId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> obtenerPorUsuarioId(@PathVariable Integer usuarioId) {
-        return ResponseEntity.ok(contratoService.obtenerPorUsuarioId(usuarioId));
+        try {
+            Map<String, Object> response = contratoService.obtenerPorUsuarioId(usuarioId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> crear(
+    public ResponseEntity<Map<String, Object>> crear(
             @RequestParam("usuarioId") Integer usuarioId,
             @RequestParam("fechaInicioContrato") String fechaInicioContrato,
             @RequestParam(value = "fechaFinContrato", required = false) String fechaFinContrato,
@@ -58,35 +81,40 @@ public class ContratoController {
             }
             contratoDTO.setTipoContrato(tipoContrato);
 
-            return ResponseEntity.ok(contratoService.crear(contratoDTO, documento));
+            Map<String, Object> response = contratoService.crear(contratoDTO, documento);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
+            response.put("mensaje", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> actualizar(
+    public ResponseEntity<Map<String, Object>> actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody ContratoDTO contratoDTO,
-            BindingResult bindingResult) {
+            BindingResult result) {
         
-        if (bindingResult.hasErrors()) {
+        if (result.hasErrors()) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", "Error de validación");
-            response.put("detalles", bindingResult.getFieldErrors().stream()
-                .map(error -> error.getDefaultMessage())
-                .toList());
+            Map<String, String> errores = result.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    error -> error.getField(),
+                    error -> error.getDefaultMessage()
+                ));
+            response.put("mensaje", "Error de validación");
+            response.put("errores", errores);
             return ResponseEntity.badRequest().body(response);
         }
 
         try {
-            return ResponseEntity.ok(contratoService.actualizar(id, contratoDTO));
+            Map<String, Object> response = contratoService.actualizar(id, contratoDTO);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
+            response.put("mensaje", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }

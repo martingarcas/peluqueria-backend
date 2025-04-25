@@ -1,7 +1,6 @@
 package com.jve.Repository;
 
 import com.jve.Entity.Cita;
-import com.jve.Entity.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,7 +26,6 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
 
     List<Cita> findByFechaBetween(Date fechaInicio, Date fechaFin);
     
-    @Query("SELECT c FROM Cita c WHERE c.trabajador.id = :trabajadorId AND c.fecha = :fecha")
-    List<Cita> findByTrabajadorAndFecha(@Param("trabajadorId") Integer trabajadorId,
-                                       @Param("fecha") Date fecha);
+    List<Cita> findByTrabajadorIdAndFecha(Integer trabajadorId, Date fecha);
+
 } 

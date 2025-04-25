@@ -270,7 +270,7 @@ public class CitaService {
             return responseMap;
         }
         
-        List<Cita> citasDelDia = citaRepository.findByTrabajadorAndFecha(trabajador.getId(), fecha);
+        List<Cita> citasDelDia = citaRepository.findByTrabajadorIdAndFecha(trabajador.getId(), fecha);
         System.out.println("Citas encontradas para el día: " + citasDelDia.size());
         citasDelDia.forEach(c -> System.out.println("Cita existente: " + c.getHoraInicio() + " - " + c.getHoraFin()));
         

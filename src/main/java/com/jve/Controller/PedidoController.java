@@ -4,12 +4,16 @@ import com.jve.DTO.PedidoDTO;
 import com.jve.Service.PedidoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/pedidos")
@@ -21,29 +25,70 @@ public class PedidoController {
     @PostMapping
     @PreAuthorize("hasRole('CLIENTE')")
     public ResponseEntity<Map<String, Object>> crearPedido() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return ResponseEntity.ok(pedidoService.crearPedido(email));
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Map<String, Object> response = pedidoService.crearPedido(email);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
     
     @GetMapping("/mis-pedidos")
     @PreAuthorize("hasRole('CLIENTE')")
     public ResponseEntity<Map<String, Object>> obtenerMisPedidos() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return ResponseEntity.ok(pedidoService.obtenerPedidosUsuario(email));
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Map<String, Object> response = pedidoService.obtenerPedidosUsuario(email);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
     
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> obtenerTodosPedidos() {
-        return ResponseEntity.ok(pedidoService.obtenerTodosPedidos());
+        try {
+            Map<String, Object> response = pedidoService.obtenerTodosPedidos();
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
     
     @PutMapping("/{id}/estado")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> actualizarEstadoPedido(
             @PathVariable Integer id,
-            @Valid @RequestBody PedidoDTO.ActualizarEstadoRequest request) {
+            @Valid @RequestBody PedidoDTO.ActualizarEstadoRequest request,
+            BindingResult result) {
         
-        return ResponseEntity.ok(pedidoService.actualizarEstadoPedido(id, request.getEstado()));
+        if (result.hasErrors()) {
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> errores = result.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    error -> error.getField(),
+                    error -> error.getDefaultMessage()
+                ));
+            response.put("mensaje", "Error de validación");
+            response.put("errores", errores);
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        try {
+            Map<String, Object> response = pedidoService.actualizarEstadoPedido(id, request.getEstado());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 } 

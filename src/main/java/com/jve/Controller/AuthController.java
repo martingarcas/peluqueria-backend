@@ -1,13 +1,10 @@
 package com.jve.Controller;
 
 import com.jve.DTO.LoginRequestDTO;
-import com.jve.DTO.LoginResponseDTO;
 import com.jve.DTO.RegistroRequestDTO;
-import com.jve.DTO.RegistroResponseDTO;
 import com.jve.Service.AuthService;
-
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindingResult;
@@ -18,23 +15,27 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> registro(@Valid @RequestBody RegistroRequestDTO request, BindingResult result) {
-        // Verificar si hay errores de validación
+    public ResponseEntity<Map<String, Object>> registro(
+            @Valid @RequestBody RegistroRequestDTO request,
+            BindingResult result) {
+        
         if (result.hasErrors()) {
             Map<String, Object> response = new HashMap<>();
-            Map<String, String> errores = new HashMap<>();
-            result.getFieldErrors().forEach(error -> 
-                errores.put(error.getField(), error.getDefaultMessage())
-            );
+            Map<String, String> errores = result.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    error -> error.getField(),
+                    error -> error.getDefaultMessage()
+                ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
             return ResponseEntity.badRequest().body(response);
@@ -50,14 +51,17 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequestDTO request, BindingResult result) {
-        // Verificar si hay errores de validación
+    public ResponseEntity<Map<String, Object>> login(
+            @Valid @RequestBody LoginRequestDTO request,
+            BindingResult result) {
+        
         if (result.hasErrors()) {
             Map<String, Object> response = new HashMap<>();
-            Map<String, String> errores = new HashMap<>();
-            result.getFieldErrors().forEach(error -> 
-                errores.put(error.getField(), error.getDefaultMessage())
-            );
+            Map<String, String> errores = result.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    error -> error.getField(),
+                    error -> error.getDefaultMessage()
+                ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
             return ResponseEntity.badRequest().body(response);

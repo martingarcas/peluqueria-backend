@@ -3,7 +3,6 @@ package com.jve.Converter;
 import com.jve.DTO.ProductoDTO;
 import com.jve.Entity.Producto;
 import com.jve.Repository.CategoriaRepository;
-import com.jve.Exception.ValidationErrorMessages;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 

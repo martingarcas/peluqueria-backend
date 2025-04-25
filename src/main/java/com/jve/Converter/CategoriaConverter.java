@@ -4,7 +4,6 @@ import com.jve.DTO.CategoriaDTO;
 import com.jve.DTO.ProductoDTO;
 import com.jve.Entity.Categoria;
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Autowired;
 import java.util.stream.Collectors;
 import java.util.List;
 
