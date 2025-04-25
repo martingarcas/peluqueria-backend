@@ -15,15 +15,21 @@ public class ProductoConverter {
     public ProductoDTO toDTO(Producto producto) {
         if (producto == null) return null;
         
-        return new ProductoDTO(
-            producto.getId(),
-            producto.getNombre(),
-            producto.getDescripcion(),
-            producto.getPrecio(),
-            producto.getStock(),
-            producto.getCategoria() != null ? producto.getCategoria().getId() : null,
-            producto.getCategoria() != null ? producto.getCategoria().getNombre() : null
-        );
+        ProductoDTO dto = new ProductoDTO();
+        dto.setId(producto.getId());
+        dto.setNombre(producto.getNombre());
+        dto.setDescripcion(producto.getDescripcion());
+        dto.setPrecio(producto.getPrecio());
+        dto.setStock(producto.getStock());
+        dto.setFoto(producto.getFoto());
+        dto.setFechaCreacion(producto.getFechaCreacion());
+        
+        if (producto.getCategoria() != null) {
+            dto.setCategoriaId(producto.getCategoria().getId());
+            dto.setCategoriaNombre(producto.getCategoria().getNombre());
+        }
+        
+        return dto;
     }
 
     public Producto toEntity(ProductoDTO dto) {
@@ -37,6 +43,7 @@ public class ProductoConverter {
         producto.setDescripcion(dto.getDescripcion());
         producto.setPrecio(dto.getPrecio());
         producto.setStock(dto.getStock());
+        producto.setFoto(dto.getFoto());
         
         // Manejo de categoría
         if (dto.getCategoriaId() != null) {

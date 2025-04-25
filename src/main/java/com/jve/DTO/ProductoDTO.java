@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import com.jve.Exception.ValidationErrorMessages;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -35,6 +36,8 @@ public class ProductoDTO {
     
     private Integer categoriaId;
     private String categoriaNombre;
+    private String foto;
+    private Date fechaCreacion;
 
     // Método para crear un nuevo producto (sin id ni categoría)
     public static ProductoDTO crearNuevo(String nombre, String descripcion, BigDecimal precio, Integer stock) {

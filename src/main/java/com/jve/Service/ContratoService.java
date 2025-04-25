@@ -77,6 +77,21 @@ public class ContratoService {
     }
 
     @Transactional
+    public Map<String, Object> crear(Integer usuarioId, String fechaInicioContrato, 
+            String fechaFinContrato, String tipoContrato, MultipartFile documento) {
+        
+        ContratoDTO contratoDTO = new ContratoDTO();
+        contratoDTO.setUsuarioId(usuarioId);
+        contratoDTO.setFechaInicioContrato(java.sql.Date.valueOf(fechaInicioContrato));
+        if (fechaFinContrato != null && !fechaFinContrato.isEmpty()) {
+            contratoDTO.setFechaFinContrato(java.sql.Date.valueOf(fechaFinContrato));
+        }
+        contratoDTO.setTipoContrato(TipoContrato.valueOf(tipoContrato.toLowerCase()));
+
+        return crear(contratoDTO, documento);
+    }
+
+    @Transactional
     public Map<String, Object> crear(ContratoDTO contratoDTO, MultipartFile documento) {
         Map<String, Object> response = new HashMap<>();
 

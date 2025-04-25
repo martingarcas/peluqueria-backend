@@ -127,9 +127,9 @@ public class HorarioController {
     public ResponseEntity<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         Map<String, String> response = new HashMap<>();
         if (ex.getMessage().contains("DiaSemana")) {
-            response.put("error", ValidationErrorMessages.DIA_SEMANA_INVALIDO);
+            response.put("mensaje", ValidationErrorMessages.DIA_SEMANA_INVALIDO);
         } else {
-            response.put("error", ValidationErrorMessages.ERROR_FORMATO_JSON);
+            response.put("mensaje", ValidationErrorMessages.ERROR_FORMATO_JSON);
         }
         return ResponseEntity.badRequest().body(response);
     }
@@ -137,7 +137,7 @@ public class HorarioController {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<?> handleRuntimeException(RuntimeException ex) {
         Map<String, String> response = new HashMap<>();
-        response.put("error", ex.getMessage());
+        response.put("mensaje", ex.getMessage());
         return ResponseEntity.badRequest().body(response);
     }
 } 

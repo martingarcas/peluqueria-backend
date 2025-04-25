@@ -11,13 +11,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +33,7 @@ public class ProductoService {
     private final ProductoRepository productoRepository;
     private final ProductoConverter converter;
     private final CategoriaRepository categoriaRepository;
+    private final String UPLOAD_DIR = "uploads/productos/";
 
     private void validarDatosProducto(String nombre, String descripcion, BigDecimal precio, Integer stock) {
         if (nombre == null || nombre.trim().isEmpty()) {
@@ -55,6 +63,32 @@ public class ProductoService {
     }
 
     @Transactional
+    public Map<String, Object> crear(ProductoDTO productoDTO, MultipartFile foto) {
+        try {
+            // Crear directorio si no existe
+            Path uploadPath = Paths.get(UPLOAD_DIR);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            // Generar nombre único para el archivo
+            String fileName = UUID.randomUUID().toString() + "_" + foto.getOriginalFilename();
+            Path filePath = uploadPath.resolve(fileName);
+
+            // Guardar el archivo
+            Files.copy(foto.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Establecer la URL de la foto
+            productoDTO.setFoto("/uploads/productos/" + fileName);
+
+            return crear(productoDTO);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error al guardar la foto del producto: " + e.getMessage());
+        }
+    }
+
+    @Transactional
     public Map<String, Object> crear(ProductoDTO productoDTO) {
         // Validar datos
         validarDatosProducto(
@@ -77,6 +111,21 @@ public class ProductoService {
         response.put("mensaje", ResponseMessages.PRODUCTO_CREADO);
         response.put("producto", converter.toDTO(guardado));
         return response;
+    }
+
+    @Deprecated
+    @Transactional
+    public Map<String, Object> crear(String nombre, String descripcion, BigDecimal precio, 
+            Integer stock, Integer categoriaId, MultipartFile foto) {
+        
+        ProductoDTO productoDTO = new ProductoDTO();
+        productoDTO.setNombre(nombre);
+        productoDTO.setDescripcion(descripcion);
+        productoDTO.setPrecio(precio);
+        productoDTO.setStock(stock);
+        productoDTO.setCategoriaId(categoriaId);
+
+        return crear(productoDTO, foto);
     }
 
     @Transactional

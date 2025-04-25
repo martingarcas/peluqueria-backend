@@ -6,6 +6,7 @@ import com.jve.Service.EstadoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/estados")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class EstadoController {
 
     private final EstadoService estadoService;
@@ -55,6 +55,7 @@ public class EstadoController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> crear(
             @Valid @RequestBody EstadoDTO estadoDTO,
             BindingResult result) {
@@ -82,6 +83,7 @@ public class EstadoController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody EstadoDTO estadoDTO,
@@ -113,6 +115,7 @@ public class EstadoController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> eliminar(@PathVariable Integer id) {
         try {
             Map<String, Object> response = estadoService.eliminar(id);

@@ -50,6 +50,9 @@ public class Producto {
     @JsonIgnoreProperties("producto")
     private List<PedidoProducto> pedidoProductos = new ArrayList<>();
 
+    @Column
+    private String foto;
+
     @PrePersist
     protected void onCreate() {
         fechaCreacion = new Date();

@@ -70,7 +70,7 @@ public class ContratoController {
             @RequestParam("fechaInicioContrato") String fechaInicioContrato,
             @RequestParam(value = "fechaFinContrato", required = false) String fechaFinContrato,
             @RequestParam("tipoContrato") TipoContrato tipoContrato,
-            @RequestPart("documento") MultipartFile documento) {
+            @RequestParam("documento") MultipartFile documento) {
         
         try {
             ContratoDTO contratoDTO = new ContratoDTO();
