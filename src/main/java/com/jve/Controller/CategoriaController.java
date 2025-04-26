@@ -25,26 +25,18 @@ public class CategoriaController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> obtenerTodas() {
         try {
-            Map<String, Object> response = categoriaService.obtenerTodas();
-            if (response.get("categorias") == null) {
-                response.put("mensaje", "No hay categorías disponibles");
-            } else {
-                response.put("mensaje", "Categorías recuperadas con éxito");
-            }
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(categoriaService.obtenerTodas());
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> obtenerPorId(@PathVariable Integer id) {
         try {
-            Map<String, Object> response = categoriaService.obtenerPorId(id);
-            response.put("mensaje", "Categoría encontrada con éxito");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(categoriaService.obtenerPorId(id));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
@@ -64,17 +56,15 @@ public class CategoriaController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
-            Map<String, Object> response = categoriaService.crear(categoriaDTO);
-            response.put("mensaje", "Categoría creada con éxito");
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(categoriaService.crear(categoriaDTO));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -94,12 +84,11 @@ public class CategoriaController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
-            Map<String, Object> response = categoriaService.actualizar(id, categoriaDTO);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(categoriaService.actualizar(id, categoriaDTO));
         } catch (ResponseStatusException ex) {
             if (ex.getStatusCode() == HttpStatus.NOT_MODIFIED) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
@@ -116,12 +105,11 @@ public class CategoriaController {
             @PathVariable Integer id,
             @RequestParam(required = false) Boolean eliminarProductos) {
         try {
-            Map<String, Object> response = categoriaService.eliminar(id, eliminarProductos);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(categoriaService.eliminar(id, eliminarProductos));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 } 

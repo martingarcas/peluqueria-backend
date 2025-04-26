@@ -54,30 +54,30 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getAllUsuarios() {
         try {
-        return ResponseEntity.ok(usuarioService.getAllUsuarios());
+            return ResponseEntity.status(HttpStatus.OK).body(usuarioService.getAllUsuarios());
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getUsuarioById(@PathVariable Integer id) {
         try {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = auth.getName();
-        boolean isAdmin = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String userEmail = auth.getName();
+            boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        if (!isAdmin && !usuarioService.isOwnProfile(id, userEmail)) {
-            Map<String, Object> response = new HashMap<>();
+            if (!isAdmin && !usuarioService.isOwnProfile(id, userEmail)) {
+                Map<String, Object> response = new HashMap<>();
                 response.put("mensaje", ValidationErrorMessages.AUTH_NO_PERMISOS);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
 
             Map<String, Object> response = usuarioService.getUsuarioById(id);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
@@ -100,23 +100,23 @@ public class UsuarioController {
                 ));
             response.put("mensaje", ValidationErrorMessages.ERROR_VALIDACION);
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         if (usuarioDTO.getRole() != null && 
             RolUsuario.trabajador.name().equalsIgnoreCase(usuarioDTO.getRole())) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Para crear un trabajador use el endpoint /api/usuarios/trabajador");
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
             Map<String, Object> response = usuarioService.createUsuario(usuarioDTO, null);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -263,7 +263,7 @@ public class UsuarioController {
         if (!errores.isEmpty()) {
             response.put("mensaje", ValidationErrorMessages.ERROR_VALIDACION);
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         // Establecer el rol y documentos
@@ -272,10 +272,10 @@ public class UsuarioController {
 
         try {
             response = usuarioService.createUsuario(usuarioDTO, foto);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -323,7 +323,7 @@ public class UsuarioController {
         if (!errores.isEmpty()) {
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -339,7 +339,7 @@ public class UsuarioController {
 
         try {
             Map<String, Object> updateResponse = usuarioService.updateUsuario(id, usuarioDTO, isAdmin);
-            return ResponseEntity.ok(updateResponse);
+            return ResponseEntity.status(HttpStatus.OK).body(updateResponse);
         } catch (ResponseStatusException ex) {
             if (ex.getStatusCode() == HttpStatus.NOT_MODIFIED) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
@@ -347,7 +347,7 @@ public class UsuarioController {
             throw ex;
         } catch (RuntimeException e) {
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -366,7 +366,7 @@ public class UsuarioController {
         }
 
         try {
-            return ResponseEntity.ok(usuarioService.deleteUsuario(id, isAdmin));
+            return ResponseEntity.status(HttpStatus.OK).body(usuarioService.deleteUsuario(id, isAdmin));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
@@ -385,7 +385,7 @@ public class UsuarioController {
             .collect(Collectors.toList());
         
         response.put("usuarios", trabajadores);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/administradores")
@@ -399,7 +399,7 @@ public class UsuarioController {
             .collect(Collectors.toList());
         
         response.put("usuarios", administradores);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/clientes")
@@ -413,7 +413,7 @@ public class UsuarioController {
             .collect(Collectors.toList());
         
         response.put("usuarios", clientes);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/{id}/foto")
@@ -425,7 +425,7 @@ public class UsuarioController {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Foto actualizada correctamente");
             response.put("url", fileUrl);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (IOException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Error al subir la imagen: " + e.getMessage());
@@ -437,7 +437,7 @@ public class UsuarioController {
     public ResponseEntity<?> getFoto(@PathVariable Integer id) {
         try {
             byte[] image = usuarioService.getFotoBytes(id);
-            return ResponseEntity.ok()
+            return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.IMAGE_JPEG)
                     .body(image);
         } catch (IOException e) {
@@ -453,11 +453,11 @@ public class UsuarioController {
             usuarioService.deleteFoto(id);
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Foto eliminada correctamente");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Error al eliminar la imagen: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
@@ -465,13 +465,13 @@ public class UsuarioController {
     public ResponseEntity<?> getImage(@PathVariable String filename) {
         try {
             byte[] imageBytes = usuarioService.getImageBytes(filename);
-            return ResponseEntity.ok()
+            return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.IMAGE_JPEG)
                     .body(imageBytes);
         } catch (IOException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Error al obtener la imagen: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
@@ -491,7 +491,7 @@ public class UsuarioController {
         Map<String, Object> response = new HashMap<>();
         response.put("mensaje", "Carrito recuperado exitosamente");
         response.put("carrito", usuario.getCarrito());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PutMapping("/carrito")
@@ -605,12 +605,12 @@ public class UsuarioController {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Carrito actualizado exitosamente");
             response.put("carrito", carritoJson);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
             
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Error al actualizar el carrito: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -630,6 +630,6 @@ public class UsuarioController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("mensaje", "Carrito vaciado exitosamente");
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 } 

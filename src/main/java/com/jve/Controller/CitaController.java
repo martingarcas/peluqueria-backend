@@ -28,11 +28,11 @@ public class CitaController {
     public ResponseEntity<Map<String, Object>> obtenerCitasUsuario() {
         try {
             Map<String, Object> response = citaService.obtenerCitasPorUsuario();
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
     
@@ -51,16 +51,16 @@ public class CitaController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
         
         try {
             Map<String, Object> response = citaService.crearCita(citaDTO);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
     
@@ -71,11 +71,11 @@ public class CitaController {
             @RequestParam String estado) {
         try {
             Map<String, Object> response = citaService.actualizarEstadoCita(id, estado);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
     
@@ -86,11 +86,11 @@ public class CitaController {
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date fecha) {
         try {
             Map<String, Object> response = citaService.obtenerDisponibilidadTrabajador(trabajadorId, servicioId, fecha);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
     
@@ -101,15 +101,15 @@ public class CitaController {
             @RequestParam String hora) {
         try {
             Map<String, Object> response = citaService.obtenerTrabajadoresNoDisponiblesConValidacion(servicioId, fecha, hora);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (ParseException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "El formato de fecha debe ser yyyy-MM-dd");
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
     
@@ -122,15 +122,15 @@ public class CitaController {
         try {
             Map<String, Object> response = citaService.obtenerDiasNoDisponiblesConValidacion(
                 servicioId, hora, fechaInicio, fechaFin);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (ParseException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "El formato de fecha debe ser yyyy-MM-dd");
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
     
@@ -139,11 +139,11 @@ public class CitaController {
             @RequestParam Integer servicioId) {
         try {
             Map<String, Object> response = citaService.obtenerTrabajadoresDisponibles(servicioId);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -151,7 +151,7 @@ public class CitaController {
     public ResponseEntity<Map<String, Object>> obtenerCitaPorId(@PathVariable Integer id) {
         try {
             Map<String, Object> response = citaService.obtenerCitaPorId(id);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
@@ -174,16 +174,16 @@ public class CitaController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
             Map<String, Object> response = citaService.reasignarCita(id, reasignacionRequest);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -192,11 +192,11 @@ public class CitaController {
     public ResponseEntity<Map<String, Object>> obtenerCitasCliente(@PathVariable Integer id) {
         try {
             Map<String, Object> response = citaService.obtenerCitasPorCliente(id);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -205,11 +205,11 @@ public class CitaController {
     public ResponseEntity<Map<String, Object>> obtenerCitasTrabajador(@PathVariable Integer id) {
         try {
             Map<String, Object> response = citaService.obtenerCitasPorTrabajador(id);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 } 

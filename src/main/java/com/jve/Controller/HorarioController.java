@@ -29,11 +29,11 @@ public class HorarioController {
     public ResponseEntity<Map<String, Object>> listarTodos() {
         try {
             Map<String, Object> response = horarioService.listarTodos();
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -42,7 +42,7 @@ public class HorarioController {
     public ResponseEntity<Map<String, Object>> obtenerPorId(@PathVariable Integer id) {
         try {
             Map<String, Object> response = horarioService.obtenerPorId(id);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
@@ -65,16 +65,16 @@ public class HorarioController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
             Map<String, Object> response = horarioService.crear(horarioDTO);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -94,12 +94,12 @@ public class HorarioController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
             Map<String, Object> response = horarioService.actualizar(id, horarioDTO);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (ResponseStatusException ex) {
             if (ex.getStatusCode() == HttpStatus.NOT_MODIFIED) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
@@ -115,7 +115,7 @@ public class HorarioController {
     public ResponseEntity<Map<String, Object>> eliminar(@PathVariable Integer id) {
         try {
             Map<String, Object> response = horarioService.eliminar(id);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
@@ -131,13 +131,13 @@ public class HorarioController {
         } else {
             response.put("mensaje", ValidationErrorMessages.ERROR_FORMATO_JSON);
         }
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<?> handleRuntimeException(RuntimeException ex) {
         Map<String, String> response = new HashMap<>();
         response.put("mensaje", ex.getMessage());
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 } 

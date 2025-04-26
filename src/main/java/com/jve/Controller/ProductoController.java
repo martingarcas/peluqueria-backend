@@ -34,11 +34,11 @@ public class ProductoController {
             } else {
                 response.put("mensaje", "Productos recuperados con éxito");
             }
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -61,11 +61,11 @@ public class ProductoController {
 
             Map<String, Object> response = productoService.crear(productoDTO, foto);
             response.put("mensaje", "Producto creado con éxito");
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -85,12 +85,12 @@ public class ProductoController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
             Map<String, Object> response = productoService.actualizar(id, productoDTO);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (ResponseStatusException ex) {
             if (ex.getStatusCode() == HttpStatus.NOT_MODIFIED) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
@@ -106,7 +106,7 @@ public class ProductoController {
     public ResponseEntity<Map<String, Object>> eliminar(@PathVariable Integer id) {
         try {
             Map<String, Object> response = productoService.eliminar(id);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());

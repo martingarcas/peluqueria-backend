@@ -28,17 +28,17 @@ public class EstadoController {
         try {
             if (tipo != null) {
                 TipoEstado.valueOf(tipo);
-                return ResponseEntity.ok(estadoService.obtenerPorTipo(tipo));
+                return ResponseEntity.status(HttpStatus.OK).body(estadoService.obtenerPorTipo(tipo));
             }
-            return ResponseEntity.ok(estadoService.obtenerTodos());
+            return ResponseEntity.status(HttpStatus.OK).body(estadoService.obtenerTodos());
         } catch (IllegalArgumentException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "El tipo de estado debe ser uno de: CITA, CONTRATO, PEDIDO");
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -46,7 +46,7 @@ public class EstadoController {
     public ResponseEntity<Map<String, Object>> obtenerPorId(@PathVariable Integer id) {
         try {
             Map<String, Object> response = estadoService.obtenerPorId(id);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
@@ -69,16 +69,16 @@ public class EstadoController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
             Map<String, Object> response = estadoService.crear(estadoDTO);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -98,7 +98,7 @@ public class EstadoController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
@@ -106,11 +106,11 @@ public class EstadoController {
             if (response.get("mensaje").equals("No se requieren cambios, el estado ya existe con los mismos datos")) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
             }
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -119,7 +119,7 @@ public class EstadoController {
     public ResponseEntity<Map<String, Object>> eliminar(@PathVariable Integer id) {
         try {
             Map<String, Object> response = estadoService.eliminar(id);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());

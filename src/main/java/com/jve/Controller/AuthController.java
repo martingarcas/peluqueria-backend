@@ -5,8 +5,8 @@ import com.jve.DTO.RegistroRequestDTO;
 import com.jve.Service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,15 +38,15 @@ public class AuthController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
-            return ResponseEntity.ok(authService.registro(request));
+            return ResponseEntity.status(HttpStatus.OK).body(authService.registro(request));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -64,19 +64,15 @@ public class AuthController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
-            return ResponseEntity.ok(authService.login(request));
-        } catch (BadCredentialsException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", "Credenciales incorrectas");
-            return ResponseEntity.status(401).body(response);
+            return ResponseEntity.status(HttpStatus.OK).body(authService.login(request));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
 } 

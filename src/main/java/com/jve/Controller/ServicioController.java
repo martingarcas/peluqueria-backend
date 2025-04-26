@@ -35,22 +35,22 @@ public class ServicioController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
-            return new ResponseEntity<>(servicioService.crear(servicioDTO), HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(servicioService.crear(servicioDTO));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> obtenerPorId(@PathVariable Integer id) {
         try {
-            return ResponseEntity.ok(servicioService.obtenerPorId(id));
+            return ResponseEntity.status(HttpStatus.OK).body(servicioService.obtenerPorId(id));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
@@ -61,18 +61,18 @@ public class ServicioController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> listarTodos() {
         try {
-            return ResponseEntity.ok(servicioService.listarTodos());
+            return ResponseEntity.status(HttpStatus.OK).body(servicioService.listarTodos());
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
     @GetMapping("/trabajador/{trabajadorId}")
     public ResponseEntity<Map<String, Object>> listarPorTrabajador(@PathVariable Integer trabajadorId) {
         try {
-            return ResponseEntity.ok(servicioService.listarPorTrabajador(trabajadorId));
+            return ResponseEntity.status(HttpStatus.OK).body(servicioService.listarPorTrabajador(trabajadorId));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
@@ -95,12 +95,12 @@ public class ServicioController {
                 ));
             response.put("mensaje", "Error de validación");
             response.put("errores", errores);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         try {
             Map<String, Object> response = servicioService.actualizar(id, servicioDTO);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (ResponseStatusException ex) {
             if (ex.getStatusCode() == HttpStatus.NOT_MODIFIED) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
@@ -115,7 +115,7 @@ public class ServicioController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> eliminar(@PathVariable Integer id) {
         try {
-            return ResponseEntity.ok(servicioService.eliminar(id));
+            return ResponseEntity.status(HttpStatus.OK).body(servicioService.eliminar(id));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
@@ -130,11 +130,11 @@ public class ServicioController {
             @RequestBody List<Integer> serviciosIds) {
         try {
             Map<String, Object> response = servicioService.asignarServiciosATrabajador(trabajadorId, serviciosIds);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 } 
