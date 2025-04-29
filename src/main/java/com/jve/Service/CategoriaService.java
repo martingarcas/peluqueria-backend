@@ -227,7 +227,7 @@ public class CategoriaService {
 
         // Validar si es la categoría protegida
         if (categoria.getNombre().equalsIgnoreCase(NOMBRE_PROTEGIDO)) {
-            throw new RuntimeException(String.format(ValidationErrorMessages.CATEGORIA_PROTEGIDA, NOMBRE_PROTEGIDO));
+            throw new RuntimeException(String.format(ValidationErrorMessages.CATEGORIA_PROTEGIDA_ELIMINAR, NOMBRE_PROTEGIDO));
         }
 
         // Verificar si tiene productos

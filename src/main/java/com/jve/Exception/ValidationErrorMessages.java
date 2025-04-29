@@ -18,7 +18,8 @@ public class ValidationErrorMessages {
     public static final String CATEGORIA_DESCRIPCION_REQUERIDA = "La descripción de la categoría es obligatoria";
     public static final String CATEGORIA_NOMBRE_DUPLICADO = "Ya existe una categoría con este nombre";
     public static final String CATEGORIA_NO_ENCONTRADA = "No se encontró la categoría con id: %d";
-    public static final String CATEGORIA_PROTEGIDA = "No se puede crear una categoría con el nombre '%s' porque es un nombre protegido del sistema.\\nEsta categoría está reservada para productos sin clasificar y se gestiona automáticamente.";
+    public static final String CATEGORIA_PROTEGIDA = "No se puede crear una categoría con el nombre '%s' porque es un nombre protegido del sistema. Esta categoría está reservada para productos sin clasificar y se gestiona automáticamente.";
+    public static final String CATEGORIA_PROTEGIDA_ELIMINAR = "No se puede eliminar la categoría '%s' porque es un nombre protegido del sistema. Esta categoría está reservada para productos sin clasificar y se gestiona automáticamente.";
     public static final String CATEGORIA_FORZAR_MOVIMIENTO = "Cuando se especifican productos existentes, el campo 'forzarMovimiento' debe estar explícitamente definido como true o false";
     public static final String CATEGORIA_PRODUCTOS_NO_EXISTEN = "Algunos IDs de productos no existen";
 
