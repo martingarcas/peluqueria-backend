@@ -65,16 +65,16 @@ public class UsuarioController {
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getUsuarioById(@PathVariable Integer id) {
         try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String userEmail = auth.getName();
-            boolean isAdmin = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = auth.getName();
+        boolean isAdmin = auth.getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-            if (!isAdmin && !usuarioService.isOwnProfile(id, userEmail)) {
-                Map<String, Object> response = new HashMap<>();
+        if (!isAdmin && !usuarioService.isOwnProfile(id, userEmail)) {
+            Map<String, Object> response = new HashMap<>();
                 response.put("mensaje", ValidationErrorMessages.AUTH_NO_PERMISOS);
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-            }
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
 
             Map<String, Object> response = usuarioService.getUsuarioById(id);
             return ResponseEntity.status(HttpStatus.OK).body(response);
