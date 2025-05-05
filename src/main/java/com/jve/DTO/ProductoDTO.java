@@ -63,7 +63,8 @@ public class ProductoDTO {
         return !this.nombre.equals(otro.nombre) ||
                !this.descripcion.equals(otro.descripcion) ||
                !this.precio.equals(otro.precio) ||
-               !this.stock.equals(otro.stock);
+               !this.stock.equals(otro.stock) ||
+               (this.foto != null && !this.foto.equals(otro.foto));
     }
 
     // Método para crear una copia para actualización
@@ -75,6 +76,7 @@ public class ProductoDTO {
         copia.setPrecio(this.precio);
         copia.setStock(this.stock);
         copia.setCategoriaId(this.categoriaId);
+        copia.setFoto(this.foto);
         return copia;
     }
 } 

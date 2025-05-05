@@ -12,7 +12,8 @@ public class ValidationErrorMessages {
     public static final String PRODUCTO_STOCK_REQUERIDO = "El stock es obligatorio";
     public static final String PRODUCTO_STOCK_MINIMO = "El stock debe ser un número entero igual o mayor que 0";
     public static final String PRODUCTO_YA_EXISTE = "Ya existe un producto con este nombre";
-    
+    public static final String PRODUCTO_NO_CAMBIOS = "No se detectaron cambios en el producto";
+
     // Mensajes para Categoria
     public static final String CATEGORIA_NOMBRE_REQUERIDO = "El nombre de la categoría es obligatorio";
     public static final String CATEGORIA_DESCRIPCION_REQUERIDA = "La descripción de la categoría es obligatoria";
@@ -22,6 +23,18 @@ public class ValidationErrorMessages {
     public static final String CATEGORIA_PROTEGIDA_ELIMINAR = "No se puede eliminar la categoría '%s' porque es un nombre protegido del sistema. Esta categoría está reservada para productos sin clasificar y se gestiona automáticamente.";
     public static final String CATEGORIA_FORZAR_MOVIMIENTO = "Cuando se especifican productos existentes, el campo 'forzarMovimiento' debe estar explícitamente definido como true o false";
     public static final String CATEGORIA_PRODUCTOS_NO_EXISTEN = "Algunos IDs de productos no existen";
+
+    // Nuevos mensajes para Categoria
+    public static final String CATEGORIA_PRODUCTOS_CREADOS = "Se crearon %d productos nuevos en la categoría";
+    public static final String CATEGORIA_PRODUCTOS_CON_CATEGORIA = "Algunos productos ya tienen categoría asignada: %s. Marca 'forzarMovimiento' como true para moverlos a esta categoría.";
+    public static final String CATEGORIA_PRODUCTO_MOVIDO = "Producto existente '%s' movido desde '%s'";
+    public static final String CATEGORIA_PROTEGIDA_NO_EXISTE = "La categoría protegida no existe";
+    public static final String CATEGORIA_PRODUCTOS_MANTIENEN = "Productos que mantienen su categoría actual:";
+    public static final String CATEGORIA_PRODUCTOS_ASIGNADOS = "Productos existentes asignados a la nueva categoría:";
+    public static final String CATEGORIA_SIN_PRODUCTOS = "sin productos asociados";
+    public static final String CATEGORIA_SOLO_SIN_CATEGORIA = "Solo se asignaron los productos existentes que no tenían categoría";
+    public static final String CATEGORIA_NO_ASIGNADOS = "No se asignaron productos existentes ya que todos pertenecen a otras categorías";
+    public static final String CATEGORIA_PRODUCTOS_ASOCIADOS = "La categoría tiene productos asociados. Debes especificar 'eliminarProductos=true' para eliminar los productos junto con la categoría, o 'eliminarProductos=false' para moverlos a la categoría 'Otros productos'";
 
     // Mensajes para Autenticación
     public static final String AUTH_EMAIL_REQUERIDO = "El email es obligatorio";

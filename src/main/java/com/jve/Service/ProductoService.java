@@ -1,30 +1,30 @@
 package com.jve.Service;
 
-import com.jve.Converter.ProductoConverter;
-import com.jve.DTO.ProductoDTO;
-import com.jve.Entity.Producto;
-import com.jve.Repository.ProductoRepository;
-import com.jve.Repository.CategoriaRepository;
-import com.jve.Exception.ValidationErrorMessages;
-import com.jve.Exception.ResponseMessages;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.multipart.MultipartFile;
-import lombok.RequiredArgsConstructor;
-
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.jve.Converter.ProductoConverter;
+import com.jve.DTO.ProductoDTO;
+import com.jve.Entity.Producto;
+import com.jve.Exception.ResponseMessages;
+import com.jve.Exception.ValidationErrorMessages;
+import com.jve.Repository.CategoriaRepository;
+import com.jve.Repository.ProductoRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -81,7 +81,9 @@ public class ProductoService {
             // Establecer la URL de la foto
             productoDTO.setFoto("/uploads/productos/" + fileName);
 
-            return crear(productoDTO);
+            Map<String, Object> response = crear(productoDTO);
+            response.put("mensaje", ResponseMessages.PRODUCTO_CREADO);
+            return response;
 
         } catch (IOException e) {
             throw new RuntimeException("Error al guardar la foto del producto: " + e.getMessage());
@@ -129,6 +131,35 @@ public class ProductoService {
     }
 
     @Transactional
+    public Map<String, Object> actualizar(Integer id, ProductoDTO productoDTO, MultipartFile foto) {
+        try {
+            // Si hay foto nueva, procesarla primero
+            if (foto != null && !foto.isEmpty()) {
+                // Crear directorio si no existe
+                Path uploadPath = Paths.get(UPLOAD_DIR);
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                // Generar nombre único para el archivo
+                String fileName = UUID.randomUUID().toString() + "_" + foto.getOriginalFilename();
+                Path filePath = uploadPath.resolve(fileName);
+
+                // Guardar el archivo
+                Files.copy(foto.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                // Establecer la URL de la foto
+                productoDTO.setFoto("/uploads/productos/" + fileName);
+            }
+
+            // Continuar con la actualización normal
+            return actualizar(id, productoDTO);
+        } catch (IOException e) {
+            throw new RuntimeException("Error al guardar la foto del producto: " + e.getMessage());
+        }
+    }
+
+    @Transactional
     public Map<String, Object> actualizar(Integer id, ProductoDTO productoDTO) {
         Producto existente = productoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("No se encontró el producto con id: " + id));
@@ -139,12 +170,19 @@ public class ProductoService {
                                 productoDTO.getCategoriaId() != null && 
                                 existente.getCategoria().getId().equals(productoDTO.getCategoriaId()));
 
+        boolean mismaFoto = (existente.getFoto() == null && (productoDTO.getFoto() == null || productoDTO.getFoto().isEmpty())) ||
+                          (existente.getFoto() != null && existente.getFoto().equals(productoDTO.getFoto()));
+
         if (existente.getNombre().equals(productoDTO.getNombre()) &&
             existente.getDescripcion().equals(productoDTO.getDescripcion()) &&
             existente.getPrecio().equals(productoDTO.getPrecio()) &&
             existente.getStock().equals(productoDTO.getStock()) &&
-            mismaCategoria) {
-            throw new ResponseStatusException(HttpStatus.NOT_MODIFIED);
+            mismaCategoria &&
+            mismaFoto) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", ValidationErrorMessages.PRODUCTO_NO_CAMBIOS);
+            response.put("producto", converter.toDTO(existente));
+            return response;
         }
 
         // Validar datos
@@ -166,6 +204,11 @@ public class ProductoService {
         existente.setDescripcion(productoDTO.getDescripcion());
         existente.setPrecio(productoDTO.getPrecio());
         existente.setStock(productoDTO.getStock());
+
+        // Actualizar foto si se proporciona una nueva
+        if (productoDTO.getFoto() != null && !productoDTO.getFoto().isEmpty()) {
+            existente.setFoto(productoDTO.getFoto());
+        }
 
         // Actualizar categoría solo si se envía una nueva
         if (productoDTO.getCategoriaId() != null) {
@@ -197,6 +240,34 @@ public class ProductoService {
         
         Map<String, Object> response = new HashMap<>();
         response.put("mensaje", ResponseMessages.PRODUCTO_ELIMINADO);
+        return response;
+    }
+
+    @Transactional
+    public Map<String, Object> actualizarParcial(Integer id, ProductoDTO productoDTO) {
+        Producto existente = productoRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("No se encontró el producto con id: " + id));
+
+        // Validar si hay cambios reales
+        if (!productoDTO.tieneModificaciones(converter.toDTO(existente))) {
+            throw new RuntimeException("No se detectaron cambios en el producto");
+        }
+
+        // Actualizar solo los campos no nulos
+        if (productoDTO.getNombre() != null) existente.setNombre(productoDTO.getNombre());
+        if (productoDTO.getDescripcion() != null) existente.setDescripcion(productoDTO.getDescripcion());
+        if (productoDTO.getPrecio() != null) existente.setPrecio(productoDTO.getPrecio());
+        if (productoDTO.getStock() != null) existente.setStock(productoDTO.getStock());
+        if (productoDTO.getCategoriaId() != null) {
+            categoriaRepository.findById(productoDTO.getCategoriaId())
+                .ifPresent(existente::setCategoria);
+        }
+
+        Producto actualizado = productoRepository.save(existente);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Producto actualizado con éxito");
+        response.put("producto", converter.toDTO(actualizado));
         return response;
     }
 } 

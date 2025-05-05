@@ -19,12 +19,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.server.ResponseStatusException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +45,7 @@ public class CategoriaService {
     private final ProductoRepository productoRepository;
     private final CategoriaConverter converter;
     private final ProductoConverter productoConverter;
+    private final ObjectMapper objectMapper;
 
     @PostConstruct
     public void initCategoriaGeneral() {
@@ -68,6 +78,131 @@ public class CategoriaService {
         response.put("mensaje", "Categoría encontrada con éxito");
         response.put("categoria", categoria);
         return response;
+    }
+
+    @Transactional
+    public Map<String, Object> crear(CategoriaDTO categoriaDTO, String productosNuevosJson, 
+            String productosExistentesIdsJson, Boolean forzarMovimiento, List<MultipartFile> fotos) {
+        try {
+            // Procesar productos nuevos si existen
+            List<ProductoDTO> productosNuevos = new ArrayList<>();
+            if (productosNuevosJson != null && !productosNuevosJson.isEmpty()) {
+                productosNuevos = objectMapper.readValue(
+                    productosNuevosJson, 
+                    new TypeReference<List<ProductoDTO>>() {}
+                );
+                categoriaDTO.setProductosNuevos(productosNuevos);
+            }
+
+            // Procesar IDs de productos existentes si existen
+            if (productosExistentesIdsJson != null && !productosExistentesIdsJson.isEmpty()) {
+                List<Integer> productosExistentesIds = objectMapper.readValue(
+                    productosExistentesIdsJson,
+                    new TypeReference<List<Integer>>() {}
+                );
+                categoriaDTO.setProductosExistentesIds(productosExistentesIds);
+            }
+
+            // Establecer forzarMovimiento
+            categoriaDTO.setForzarMovimiento(forzarMovimiento);
+
+            // Llamar al método existente
+            return crear(categoriaDTO, fotos);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al procesar los datos de la categoría: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public Map<String, Object> crear(CategoriaDTO categoriaDTO, List<MultipartFile> fotos) {
+        try {
+            // Procesar las fotos primero si hay productos nuevos y fotos
+            if (categoriaDTO.getProductosNuevos() != null && !categoriaDTO.getProductosNuevos().isEmpty() 
+                && fotos != null && !fotos.isEmpty()) {
+                
+                // Crear directorio si no existe
+                Path uploadPath = Paths.get("uploads/productos");
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                // Procesar cada foto
+                for (int i = 0; i < categoriaDTO.getProductosNuevos().size() && i < fotos.size(); i++) {
+                    MultipartFile foto = fotos.get(i);
+                    if (foto != null && !foto.isEmpty()) {
+                        // Generar nombre único para el archivo
+                        String fileName = UUID.randomUUID().toString() + "_" + foto.getOriginalFilename();
+                        Path filePath = uploadPath.resolve(fileName);
+
+                        // Guardar el archivo
+                        Files.copy(foto.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                        // Establecer la URL de la foto en el DTO correspondiente
+                        categoriaDTO.getProductosNuevos().get(i).setFoto("/uploads/productos/" + fileName);
+                    }
+                }
+            }
+
+            return crear(categoriaDTO);
+        } catch (IOException e) {
+            throw new RuntimeException("Error al guardar las fotos de los productos: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public Map<String, Object> actualizar(Integer id, CategoriaDTO categoriaDTO, String productosNuevosJson,
+            String productosExistentesIdsJson, Boolean forzarMovimiento, List<MultipartFile> fotos) {
+        try {
+            // Procesar productos nuevos si existen
+            List<ProductoDTO> productosNuevos = new ArrayList<>();
+            if (productosNuevosJson != null && !productosNuevosJson.isEmpty()) {
+                productosNuevos = objectMapper.readValue(
+                    productosNuevosJson, 
+                    new TypeReference<List<ProductoDTO>>() {}
+                );
+                // Asignar las fotos a los productos nuevos si hay fotos
+                if (fotos != null && !fotos.isEmpty()) {
+                    for (int i = 0; i < productosNuevos.size() && i < fotos.size(); i++) {
+                        MultipartFile foto = fotos.get(i);
+                        if (foto != null && !foto.isEmpty()) {
+                            // Crear directorio si no existe
+                            Path uploadPath = Paths.get("uploads/productos");
+                            if (!Files.exists(uploadPath)) {
+                                Files.createDirectories(uploadPath);
+                            }
+
+                            // Generar nombre único para el archivo
+                            String fileName = UUID.randomUUID().toString() + "_" + foto.getOriginalFilename();
+                            Path filePath = uploadPath.resolve(fileName);
+
+                            // Guardar el archivo
+                            Files.copy(foto.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                            // Establecer la URL de la foto en el DTO
+                            productosNuevos.get(i).setFoto("/uploads/productos/" + fileName);
+                        }
+                    }
+                }
+                categoriaDTO.setProductosNuevos(productosNuevos);
+            }
+
+            // Procesar IDs de productos existentes si existen
+            if (productosExistentesIdsJson != null && !productosExistentesIdsJson.isEmpty()) {
+                List<Integer> productosExistentesIds = objectMapper.readValue(
+                    productosExistentesIdsJson,
+                    new TypeReference<List<Integer>>() {}
+                );
+                categoriaDTO.setProductosExistentesIds(productosExistentesIds);
+            }
+
+            // Establecer forzarMovimiento
+            categoriaDTO.setForzarMovimiento(forzarMovimiento);
+
+            // Llamar al método existente
+            return actualizar(id, categoriaDTO);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al procesar los datos de la categoría: " + e.getMessage());
+        }
     }
 
     @Transactional
@@ -114,11 +249,19 @@ public class CategoriaService {
         // Crear y asignar productos nuevos si los hay
         if (categoriaDTO.getProductosNuevos() != null && !categoriaDTO.getProductosNuevos().isEmpty()) {
             for (ProductoDTO productoDTO : categoriaDTO.getProductosNuevos()) {
+                System.out.println("Creando producto con foto: " + productoDTO.getFoto()); // Log para debug
                 Producto producto = productoConverter.toEntity(productoDTO);
                 producto.setCategoria(categoriaFinal);
+                
+                // Asegurarnos de que la foto se establezca
+                if (productoDTO.getFoto() != null && !productoDTO.getFoto().isEmpty()) {
+                    producto.setFoto(productoDTO.getFoto());
+                    System.out.println("Foto establecida en entidad: " + producto.getFoto()); // Log para debug
+                }
+                
                 productoRepository.save(producto);
             }
-            mensaje.append(String.format("\\nSe crearon %d productos nuevos en la categoría", 
+            mensaje.append(String.format(ValidationErrorMessages.CATEGORIA_PRODUCTOS_CREADOS, 
                 categoriaDTO.getProductosNuevos().size()));
         }
 
@@ -128,7 +271,7 @@ public class CategoriaService {
             
             // Verificar que todos los IDs existen
             if (productosExistentes.size() != categoriaDTO.getProductosExistentesIds().size()) {
-                throw new RuntimeException("Algunos IDs de productos no existen");
+                throw new RuntimeException(ValidationErrorMessages.CATEGORIA_PRODUCTOS_NO_EXISTEN);
             }
 
             // Separar productos con y sin categoría
@@ -146,14 +289,14 @@ public class CategoriaService {
             // Si hay productos con categoría y no se fuerza el movimiento
             if (!productosConCategoria.isEmpty() && !categoriaDTO.getForzarMovimiento()) {
                 if (productosSinCategoria.isEmpty()) {
-                    mensaje.append(". No se asignaron productos existentes ya que todos pertenecen a otras categorías");
+                    mensaje.append(". " + ValidationErrorMessages.CATEGORIA_NO_ASIGNADOS);
                 } else {
-                    mensaje.append(". Solo se asignaron los productos existentes que no tenían categoría");
+                    mensaje.append(". " + ValidationErrorMessages.CATEGORIA_SOLO_SIN_CATEGORIA);
                 }
                 
-                mensaje.append("\\nProductos que mantienen su categoría actual:\\n");
+                mensaje.append("ValidationErrorMessages.CATEGORIA_PRODUCTOS_MANTIENEN");
                 productosConCategoria.forEach((producto, categoriaActual) -> 
-                    mensaje.append(String.format("- %s (en '%s')\\n", producto, categoriaActual))
+                    mensaje.append(String.format("- %s (en '%s')", producto, categoriaActual))
                 );
                 
                 // Si hay productos sin categoría, moverlos
@@ -162,9 +305,9 @@ public class CategoriaService {
                         producto.setCategoria(categoriaFinal);
                         productoRepository.save(producto);
                     });
-                    mensaje.append("\\nProductos existentes asignados a la nueva categoría:\\n");
+                    mensaje.append(ValidationErrorMessages.CATEGORIA_PRODUCTOS_ASIGNADOS);
                     productosSinCategoria.forEach(producto -> 
-                        mensaje.append(String.format("- %s\\n", producto.getNombre()))
+                        mensaje.append(String.format("- %s", producto.getNombre()))
                     );
                 }
             } else {
@@ -173,11 +316,12 @@ public class CategoriaService {
                     String categoriaAnterior = producto.getCategoria() != null ? producto.getCategoria().getNombre() : "sin categoría";
                     producto.setCategoria(categoriaFinal);
                     productoRepository.save(producto);
-                    mensaje.append(String.format("\\n- Producto existente '%s' movido desde '%s'", producto.getNombre(), categoriaAnterior));
+                    mensaje.append(String.format(ValidationErrorMessages.CATEGORIA_PRODUCTO_MOVIDO, 
+                        producto.getNombre(), categoriaAnterior));
                 });
             }
         } else if (categoriaDTO.getProductosNuevos() == null || categoriaDTO.getProductosNuevos().isEmpty()) {
-            mensaje.append(" sin productos asociados");
+            mensaje.append(" " + ValidationErrorMessages.CATEGORIA_SIN_PRODUCTOS);
         }
 
         // Recargar la categoría para obtener todos los productos actualizados
@@ -192,25 +336,62 @@ public class CategoriaService {
         Categoria existente = categoriaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(String.format(ValidationErrorMessages.CATEGORIA_NO_ENCONTRADA, id)));
 
-        // Validar si es la categoría protegida
+        // Para la categoría protegida, solo permitimos mover productos
         if (existente.getNombre().equalsIgnoreCase(NOMBRE_PROTEGIDO)) {
-            throw new RuntimeException(String.format(ValidationErrorMessages.CATEGORIA_PROTEGIDA, NOMBRE_PROTEGIDO));
+            if (!existente.getNombre().equals(categoriaDTO.getNombre()) || 
+                !existente.getDescripcion().equals(categoriaDTO.getDescripcion())) {
+                throw new RuntimeException(String.format(ValidationErrorMessages.CATEGORIA_PROTEGIDA, NOMBRE_PROTEGIDO));
+            }
+        } else {
+            // Si el nombre es diferente, validamos que no exista y que no sea el nombre protegido
+            if (!existente.getNombre().equals(categoriaDTO.getNombre())) {
+                if (categoriaDTO.getNombre().equalsIgnoreCase(NOMBRE_PROTEGIDO)) {
+                    throw new RuntimeException(String.format(ValidationErrorMessages.CATEGORIA_PROTEGIDA, NOMBRE_PROTEGIDO));
+                }
+                if (categoriaRepository.existsByNombre(categoriaDTO.getNombre())) {
+                    throw new RuntimeException(ValidationErrorMessages.CATEGORIA_NOMBRE_DUPLICADO);
+                }
+            }
+            
+            existente.setNombre(categoriaDTO.getNombre());
+            existente.setDescripcion(categoriaDTO.getDescripcion());
         }
 
-        // Si tanto nombre como descripción son idénticos, no hacemos update
-        if (existente.getNombre().equals(categoriaDTO.getNombre()) && 
-            existente.getDescripcion().equals(categoriaDTO.getDescripcion())) {
-            throw new ResponseStatusException(HttpStatus.NOT_MODIFIED);
-        }
+        // Procesar productos existentes si los hay
+        if (categoriaDTO.getProductosExistentesIds() != null && !categoriaDTO.getProductosExistentesIds().isEmpty()) {
+            List<Producto> productosExistentes = productoRepository.findAllById(categoriaDTO.getProductosExistentesIds());
+            
+            // Verificar que todos los IDs existen
+            if (productosExistentes.size() != categoriaDTO.getProductosExistentesIds().size()) {
+                throw new RuntimeException(ValidationErrorMessages.CATEGORIA_PRODUCTOS_NO_EXISTEN);
+            }
 
-        // Si el nombre es diferente, validamos que no exista
-        if (!existente.getNombre().equals(categoriaDTO.getNombre()) && 
-            categoriaRepository.existsByNombre(categoriaDTO.getNombre())) {
-            throw new RuntimeException(ValidationErrorMessages.CATEGORIA_NOMBRE_DUPLICADO);
-        }
+            // Separar productos con y sin categoría
+            Map<String, String> productosConCategoria = new HashMap<>();
+            List<Producto> productosSinCategoria = new ArrayList<>();
 
-        existente.setNombre(categoriaDTO.getNombre());
-        existente.setDescripcion(categoriaDTO.getDescripcion());
+            for (Producto producto : productosExistentes) {
+                if (producto.getCategoria() != null) {
+                    productosConCategoria.put(producto.getNombre(), producto.getCategoria().getNombre());
+                } else {
+                    productosSinCategoria.add(producto);
+                }
+            }
+
+            // Si hay productos con categoría y no se fuerza el movimiento
+            if (!productosConCategoria.isEmpty() && (categoriaDTO.getForzarMovimiento() == null || !categoriaDTO.getForzarMovimiento())) {
+                throw new RuntimeException(String.format(ValidationErrorMessages.CATEGORIA_PRODUCTOS_CON_CATEGORIA, 
+                    productosConCategoria.entrySet().stream()
+                        .map(e -> e.getKey() + " (en " + e.getValue() + ")")
+                        .collect(Collectors.joining(", "))));
+            }
+
+            // Mover todos los productos
+            for (Producto producto : productosExistentes) {
+                producto.setCategoria(existente);
+                productoRepository.save(producto);
+            }
+        }
         
         Categoria updated = categoriaRepository.save(existente);
         
@@ -235,7 +416,7 @@ public class CategoriaService {
         
         // Si tiene productos y no se especifica qué hacer con ellos
         if (tieneProductos && eliminarProductos == null) {
-            throw new RuntimeException("La categoría tiene productos asociados. Debes especificar 'eliminarProductos=true' para eliminar los productos junto con la categoría, o 'eliminarProductos=false' para moverlos a la categoría 'Otros productos'");
+            throw new RuntimeException(ValidationErrorMessages.CATEGORIA_PRODUCTOS_ASOCIADOS);
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -254,7 +435,7 @@ public class CategoriaService {
             return response;
         } else {
             Categoria categoriaGeneral = categoriaRepository.findByNombreIgnoreCase(NOMBRE_PROTEGIDO)
-                .orElseThrow(() -> new RuntimeException("La categoría protegida no existe"));
+                .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.CATEGORIA_PROTEGIDA_NO_EXISTE));
             
             List<Producto> productos = new ArrayList<>(categoria.getProductos());
             for (Producto producto : productos) {
