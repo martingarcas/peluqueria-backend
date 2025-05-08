@@ -28,8 +28,6 @@ public class UsuarioDTO {
     @Email(message = ValidationErrorMessages.AUTH_EMAIL_FORMATO)
     private String email;
 
-    @NotBlank(message = ValidationErrorMessages.AUTH_DIRECCION_REQUERIDA)
-    @Size(min = 5, max = 200, message = "La dirección debe tener entre 5 y 200 caracteres")
     private String direccion;
 
     @NotBlank(message = ValidationErrorMessages.AUTH_TELEFONO_REQUERIDO)

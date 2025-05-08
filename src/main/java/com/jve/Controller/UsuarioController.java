@@ -127,11 +127,18 @@ public class UsuarioController {
             @RequestPart(value = "contrato.documentoContrato", required = false) MultipartFile documentoContrato,
             @RequestParam(value = "contrato.fechaInicioContrato", required = false) String fechaInicioContrato,
             @RequestParam(value = "contrato.fechaFinContrato", required = false) String fechaFinContrato,
+            @RequestParam(value = "contrato.tipoContrato", required = false) String tipoContrato,
+            @RequestParam(value = "contrato.salario", required = false) String salario,
             @ModelAttribute UsuarioDTO usuarioDTO,
             BindingResult bindingResult) {
         
         Map<String, Object> response = new HashMap<>();
         Map<String, String> errores = new HashMap<>();
+
+        // Inicializar ContratoDTO
+        if (usuarioDTO.getContrato() == null) {
+            usuarioDTO.setContrato(new ContratoDTO());
+        }
 
         // Validar manualmente los campos requeridos
         if (usuarioDTO.getNombre() == null || usuarioDTO.getNombre().trim().isEmpty()) {
@@ -175,7 +182,6 @@ public class UsuarioController {
             errores.put("foto", ValidationErrorMessages.TRABAJADOR_FOTO_REQUERIDA);
         }
 
-        // Validar contrato y sus campos
         if (documentoContrato == null || documentoContrato.isEmpty()) {
             errores.put("documentoContrato", ValidationErrorMessages.TRABAJADOR_CONTRATO_REQUERIDO);
         }
@@ -186,9 +192,6 @@ public class UsuarioController {
         } else {
             try {
                 java.sql.Date fechaInicio = java.sql.Date.valueOf(fechaInicioContrato);
-                if (usuarioDTO.getContrato() == null) {
-                    usuarioDTO.setContrato(new ContratoDTO());
-                }
                 usuarioDTO.getContrato().setFechaInicioContrato(fechaInicio);
             } catch (IllegalArgumentException e) {
                 errores.put("fechaInicioContrato", "El formato de la fecha debe ser YYYY-MM-DD");
@@ -199,37 +202,36 @@ public class UsuarioController {
         if (fechaFinContrato != null && !fechaFinContrato.trim().isEmpty()) {
             try {
                 java.sql.Date fechaFin = java.sql.Date.valueOf(fechaFinContrato);
-                if (usuarioDTO.getContrato() == null) {
-                    usuarioDTO.setContrato(new ContratoDTO());
-                }
                 usuarioDTO.getContrato().setFechaFinContrato(fechaFin);
             } catch (IllegalArgumentException e) {
                 errores.put("fechaFinContrato", "El formato de la fecha debe ser YYYY-MM-DD");
             }
         }
 
-        // Validar campos del contrato
-        if (usuarioDTO.getContrato() == null) {
+        // Procesar el tipo de contrato
+        if (tipoContrato == null || tipoContrato.trim().isEmpty()) {
             errores.put("tipoContrato", ValidationErrorMessages.CONTRATO_TIPO_REQUERIDO);
+        } else {
+            try {
+                usuarioDTO.getContrato().setTipoContrato(TipoContrato.valueOf(tipoContrato.toLowerCase()));
+            } catch (IllegalArgumentException e) {
+                errores.put("tipoContrato", "Tipo de contrato no válido");
+            }
+        }
+
+        // Procesar el salario del contrato
+        if (salario == null) {
             errores.put("salario", ValidationErrorMessages.CONTRATO_SALARIO_REQUERIDO);
         } else {
-            // Validar tipo de contrato
-            if (usuarioDTO.getContrato().getTipoContrato() == null) {
-                errores.put("tipoContrato", ValidationErrorMessages.CONTRATO_TIPO_REQUERIDO);
-            }
-
-            // Validar salario
-            if (usuarioDTO.getContrato().getSalario() == null) {
-                errores.put("salario", ValidationErrorMessages.CONTRATO_SALARIO_REQUERIDO);
-            } else if (usuarioDTO.getContrato().getSalario().compareTo(BigDecimal.ZERO) <= 0) {
-                errores.put("salario", ValidationErrorMessages.CONTRATO_SALARIO_NEGATIVO);
-            }
-
-            // Validar fecha fin para contratos temporales
-            if (TipoContrato.temporal.name().equalsIgnoreCase(usuarioDTO.getContrato().getTipoContrato().toString())) {
-                if (fechaFinContrato == null || fechaFinContrato.trim().isEmpty()) {
-                    errores.put("fechaFinContrato", ValidationErrorMessages.CONTRATO_TEMPORAL_REQUIERE_FECHA_FIN);
+            try {
+                BigDecimal salarioDecimal = new BigDecimal(salario);
+                if (salarioDecimal.compareTo(BigDecimal.ZERO) <= 0) {
+                    errores.put("salario", ValidationErrorMessages.CONTRATO_SALARIO_NEGATIVO);
+                } else {
+                    usuarioDTO.getContrato().setSalario(salarioDecimal);
                 }
+            } catch (NumberFormatException e) {
+                errores.put("salario", "El salario debe ser un número válido");
             }
         }
 
@@ -241,7 +243,6 @@ public class UsuarioController {
             errores.put("serviciosIds", ValidationErrorMessages.TRABAJADOR_SERVICIOS_REQUERIDOS);
         } else {
             try {
-                // Validar que los servicios existan
                 usuarioService.validarServiciosExisten(serviciosIds);
             } catch (RuntimeException e) {
                 errores.put("serviciosIds", ValidationErrorMessages.SERVICIOS_NO_ENCONTRADOS);
@@ -252,7 +253,6 @@ public class UsuarioController {
             errores.put("horariosIds", ValidationErrorMessages.TRABAJADOR_HORARIOS_REQUERIDOS);
         } else {
             try {
-                // Validar que los horarios existan
                 usuarioService.validarHorariosExisten(horariosIds);
             } catch (RuntimeException e) {
                 errores.put("horariosIds", ValidationErrorMessages.HORARIOS_NO_ENCONTRADOS);

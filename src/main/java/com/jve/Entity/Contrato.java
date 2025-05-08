@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -42,4 +44,7 @@ public class Contrato {
 
     @Column(name = "url_contrato")
     private String urlContrato;
+
+    @Column(name = "salario", nullable = false)
+    private BigDecimal salario;
 } 

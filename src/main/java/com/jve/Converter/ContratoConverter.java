@@ -30,6 +30,7 @@ public class ContratoConverter {
         dto.setEstadoId(contrato.getEstado().getId());
         dto.setEstadoNombre(contrato.getEstado().getNombre());
         dto.setUrlContrato(contrato.getUrlContrato());
+        dto.setSalario(contrato.getSalario());
         
         return dto;
     }
@@ -55,6 +56,7 @@ public class ContratoConverter {
         contrato.setTipoContrato(dto.getTipoContrato());
         contrato.setEstado(estado);
         contrato.setUrlContrato(dto.getUrlContrato());
+        contrato.setSalario(dto.getSalario());
     
         return contrato;
     }
