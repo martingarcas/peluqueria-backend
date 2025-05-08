@@ -7,16 +7,20 @@ import com.jve.Entity.Usuario;
 import com.jve.Entity.RolUsuario;
 import com.jve.Entity.Servicio;
 import com.jve.Entity.Horario;
+import com.jve.Entity.Producto;
 import com.jve.Entity.TipoContrato;
 import com.jve.Repository.UsuarioRepository;
 import com.jve.Repository.ServicioRepository;
 import com.jve.Repository.HorarioRepository;
+import com.jve.Repository.ProductoRepository;
 import com.jve.Converter.UsuarioConverter;
 import com.jve.Exception.ValidationErrorMessages;
 import com.jve.Exception.ResponseMessages;
 import com.jve.Exception.ResourceNotFoundException;
 import com.jve.Exception.ResourceAlreadyExistsException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,11 +46,15 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final ServicioRepository servicioRepository;
     private final HorarioRepository horarioRepository;
+    private final ProductoRepository productoRepository;
     private final ContratoService contratoService;
-    private final String UPLOAD_DIR = "uploads/users/";
+    private final ObjectMapper objectMapper;
+    private final String UPLOAD_DIR = "uploads/";
+    private final String UPLOAD_DIR_FOTOS = "uploads/users/fotos/";
+    private final String UPLOAD_DIR_CONTRATOS = "uploads/users/contratos/";
 
     @Transactional(readOnly = true)
-    public Map<String, Object> getAllUsuarios() {
+    public Map<String, Object> obtenerTodos() {
         List<Usuario> usuarios = usuarioRepository.findAll();
         Map<String, Object> response = new HashMap<>();
         response.put("mensaje", ResponseMessages.USUARIOS_LISTADOS);
@@ -57,7 +65,27 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Object> getUsuarioById(Integer id) {
+    public Map<String, Object> obtenerPorRol(String rolNombre) {
+        try {
+            RolUsuario rol = RolUsuario.valueOf(rolNombre.toLowerCase());
+            List<Usuario> usuarios = usuarioRepository.findAll()
+                .stream()
+                .filter(u -> u.getRol() == rol)
+                .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", ResponseMessages.USUARIOS_LISTADOS);
+            response.put("usuarios", usuarios.stream()
+                .map(usuarioConverter::toResponseDTO)
+                .collect(Collectors.toList()));
+            return response;
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Rol no válido: " + rolNombre);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerPorId(Integer id) {
         Usuario usuario = usuarioRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
         
@@ -68,7 +96,7 @@ public class UsuarioService {
     }
 
     @Transactional
-    public Map<String, Object> createUsuario(UsuarioDTO usuarioDTO) {
+    public Map<String, Object> crear(UsuarioDTO usuarioDTO, MultipartFile foto, MultipartFile documentoContrato) {
         // Validar si ya existe un usuario con el mismo email
         if (usuarioRepository.findByEmail(usuarioDTO.getEmail()).isPresent()) {
             throw new ResourceAlreadyExistsException(ValidationErrorMessages.AUTH_EMAIL_YA_REGISTRADO);
@@ -77,6 +105,16 @@ public class UsuarioService {
         // Validar que el rol sea válido
         if (usuarioDTO.getRole() == null || !isValidRole(usuarioDTO.getRole())) {
             throw new IllegalArgumentException("El rol especificado no es válido. Roles válidos: cliente, trabajador, admin");
+        }
+
+        // Si es trabajador, asegurarse que el documento del contrato está presente
+        if (usuarioDTO.getRole() != null && 
+            RolUsuario.trabajador.name().equalsIgnoreCase(usuarioDTO.getRole())) {
+            if (documentoContrato == null || documentoContrato.isEmpty()) {
+                throw new RuntimeException(ValidationErrorMessages.TRABAJADOR_CONTRATO_REQUERIDO);
+            }
+            // Asignar el documento al DTO para procesarlo
+            usuarioDTO.setDocumentoContrato(documentoContrato);
         }
 
         // Crear el usuario
@@ -92,30 +130,11 @@ public class UsuarioService {
             gestionarDatosTrabajador(usuarioGuardado, usuarioDTO);
         }
 
-        // Preparar la respuesta
-        Map<String, Object> response = new HashMap<>();
-        response.put("mensaje", ResponseMessages.USUARIO_CREADO);
-        response.put("usuario", usuarioConverter.toResponseDTO(usuarioGuardado));
-        return response;
-    }
-
-    private boolean isValidRole(String role) {
-        try {
-            RolUsuario.valueOf(role.toLowerCase());
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
-    @Transactional
-    public Map<String, Object> createUsuario(UsuarioDTO usuarioDTO, MultipartFile foto) {
-        Map<String, Object> response = createUsuario(usuarioDTO);
-        
+        // Guardar foto si existe
         if (foto != null && !foto.isEmpty()) {
             try {
                 // Crear el directorio si no existe
-                Path uploadPath = Paths.get(UPLOAD_DIR);
+                Path uploadPath = Paths.get(UPLOAD_DIR_FOTOS);
                 if (!Files.exists(uploadPath)) {
                     Files.createDirectories(uploadPath);
                 }
@@ -128,30 +147,24 @@ public class UsuarioService {
                 Files.copy(foto.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
                 // Actualizar URL de la foto
-                Usuario usuario = usuarioRepository.findById(((RegistroResponseDTO)response.get("usuario")).getId())
-                    .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
-                usuario.setFoto(UPLOAD_DIR + "/" + nombreArchivo);
-                usuarioRepository.save(usuario);
-                
-                response.put("usuario", usuarioConverter.toResponseDTO(usuario));
+                usuario.setFoto("/uploads/users/fotos/" + nombreArchivo);
+                usuarioGuardado = usuarioRepository.save(usuarioGuardado);
             } catch (IOException e) {
                 throw new RuntimeException("Error al guardar la foto del usuario", e);
             }
         }
-        
+
+        // Preparar la respuesta
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", ResponseMessages.USUARIO_CREADO);
+        response.put("usuario", usuarioConverter.toResponseDTO(usuarioGuardado));
         return response;
     }
 
     @Transactional
-    public Map<String, Object> updateUsuario(Integer id, UsuarioDTO usuarioDTO, boolean isAdmin) {
+    public Map<String, Object> actualizar(Integer id, UsuarioDTO usuarioDTO, MultipartFile foto, MultipartFile documentoContrato) {
         Usuario usuario = usuarioRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
-
-        // Si no es admin, no puede cambiar el rol
-        if (!isAdmin && usuarioDTO.getRole() != null && 
-            !usuario.getRol().name().equals(usuarioDTO.getRole())) {
-            throw new RuntimeException(ValidationErrorMessages.AUTH_NO_PERMISOS_ROL);
-        }
 
         // Validar que el email no exista si se está cambiando
         if (!usuario.getEmail().equals(usuarioDTO.getEmail()) && 
@@ -175,18 +188,54 @@ public class UsuarioService {
             usuario.setPassword(passwordEncoder.encode(usuarioDTO.getPassword()));
         }
 
-        // Si es admin y está cambiando el rol a trabajador
-        if (isAdmin && usuarioDTO.getRole() != null && 
+        // Si hay cambio de rol a trabajador
+        if (usuarioDTO.getRole() != null && 
             RolUsuario.trabajador.name().equalsIgnoreCase(usuarioDTO.getRole()) && 
             usuario.getRol() != RolUsuario.trabajador) {
             
+            if (documentoContrato == null || documentoContrato.isEmpty()) {
+                throw new RuntimeException(ValidationErrorMessages.TRABAJADOR_CONTRATO_REQUERIDO);
+            }
+            
+            usuarioDTO.setDocumentoContrato(documentoContrato);
             validarDatosTrabajador(usuarioDTO);
             usuario.setRol(RolUsuario.trabajador);
             usuario = usuarioRepository.save(usuario);
             gestionarDatosTrabajador(usuario, usuarioDTO);
-        } else {
-            usuario = usuarioRepository.save(usuario);
+        } else if (usuarioDTO.getRole() != null) {
+            usuario.setRol(RolUsuario.valueOf(usuarioDTO.getRole().toLowerCase()));
         }
+
+        // Actualizar foto si existe
+        if (foto != null && !foto.isEmpty()) {
+            try {
+                // Eliminar foto anterior si existe
+                if (usuario.getFoto() != null && !usuario.getFoto().isEmpty()) {
+                    Path fotoAnterior = Paths.get(usuario.getFoto());
+                    Files.deleteIfExists(fotoAnterior);
+                }
+
+                // Crear el directorio si no existe
+                Path uploadPath = Paths.get(UPLOAD_DIR_FOTOS);
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                // Generar nombre único para el archivo
+                String nombreArchivo = UUID.randomUUID().toString() + "_" + foto.getOriginalFilename();
+                Path filePath = uploadPath.resolve(nombreArchivo);
+
+                // Guardar archivo
+                Files.copy(foto.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                // Actualizar URL de la foto
+                usuario.setFoto("/uploads/users/fotos/" + nombreArchivo);
+            } catch (IOException e) {
+                throw new RuntimeException("Error al guardar la foto del usuario", e);
+            }
+        }
+
+        usuario = usuarioRepository.save(usuario);
 
         Map<String, Object> response = new HashMap<>();
         response.put("mensaje", ResponseMessages.USUARIO_ACTUALIZADO);
@@ -195,17 +244,20 @@ public class UsuarioService {
     }
 
     @Transactional
-    public Map<String, Object> deleteUsuario(Integer id, boolean isAdmin) {
+    public Map<String, Object> eliminar(Integer id) {
         Usuario usuario = usuarioRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
-
-        // Si es trabajador y no es admin, no puede eliminar su cuenta
-        if (usuario.getRol() == RolUsuario.trabajador && !isAdmin) {
-            throw new RuntimeException(ValidationErrorMessages.AUTH_NO_PERMISOS_ELIMINAR);
-        }
         
         // Eliminar foto si existe
-        deleteFoto(id);
+        if (usuario.getFoto() != null && !usuario.getFoto().isEmpty()) {
+            try {
+                Path fotoPath = Paths.get(usuario.getFoto());
+                Files.deleteIfExists(fotoPath);
+            } catch (IOException e) {
+                // Solo loguear el error, no interrumpir la eliminación
+                System.err.println("Error al eliminar la foto: " + e.getMessage());
+            }
+        }
         
         usuarioRepository.deleteById(id);
         
@@ -214,35 +266,166 @@ public class UsuarioService {
         return response;
     }
 
-    @Transactional(readOnly = true)
-    public boolean isOwnProfile(Integer id, String email) {
-        return usuarioRepository.findById(id)
-            .map(usuario -> usuario.getEmail().equals(email))
-            .orElse(false);
+    @Transactional
+    public Map<String, Object> actualizarParcial(Integer id, UsuarioDTO usuarioDTO, MultipartFile foto) {
+        Usuario usuario = usuarioRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+
+        // Actualizar datos básicos si se proporcionan
+        boolean actualizado = false;
+
+        if (usuarioDTO.getNombre() != null && !usuarioDTO.getNombre().isEmpty()) {
+            usuario.setNombre(usuarioDTO.getNombre());
+            actualizado = true;
+        }
+
+        if (usuarioDTO.getApellidos() != null && !usuarioDTO.getApellidos().isEmpty()) {
+            usuario.setApellidos(usuarioDTO.getApellidos());
+            actualizado = true;
+        }
+
+        if (usuarioDTO.getEmail() != null && !usuarioDTO.getEmail().isEmpty() && 
+            !usuario.getEmail().equals(usuarioDTO.getEmail())) {
+            
+            if (usuarioRepository.existsByEmail(usuarioDTO.getEmail())) {
+                throw new ResourceAlreadyExistsException(ValidationErrorMessages.AUTH_EMAIL_YA_REGISTRADO);
+            }
+            
+            usuario.setEmail(usuarioDTO.getEmail());
+            actualizado = true;
+        }
+
+        if (usuarioDTO.getDireccion() != null) {
+            usuario.setDireccion(usuarioDTO.getDireccion());
+            actualizado = true;
+        }
+
+        if (usuarioDTO.getTelefono() != null && !usuarioDTO.getTelefono().isEmpty()) {
+            usuario.setTelefono(usuarioDTO.getTelefono());
+            actualizado = true;
+        }
+
+        if (usuarioDTO.getPassword() != null && !usuarioDTO.getPassword().isEmpty()) {
+            usuario.setPassword(passwordEncoder.encode(usuarioDTO.getPassword()));
+            actualizado = true;
+        }
+
+        // Actualizar foto si viene en la petición
+        if (foto != null && !foto.isEmpty()) {
+            try {
+                // Eliminar foto anterior si existe
+                if (usuario.getFoto() != null && !usuario.getFoto().isEmpty()) {
+                    Path fotoAnterior = Paths.get(usuario.getFoto());
+                    Files.deleteIfExists(fotoAnterior);
+                }
+
+                // Crear el directorio si no existe
+                Path uploadPath = Paths.get(UPLOAD_DIR_FOTOS);
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                // Generar nombre único para el archivo
+                String nombreArchivo = UUID.randomUUID().toString() + "_" + foto.getOriginalFilename();
+                Path filePath = uploadPath.resolve(nombreArchivo);
+
+                // Guardar archivo
+                Files.copy(foto.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                // Actualizar URL de la foto
+                usuario.setFoto("/uploads/users/fotos/" + nombreArchivo);
+                actualizado = true;
+            } catch (IOException e) {
+                throw new RuntimeException("Error al guardar la foto del usuario", e);
+            }
+        }
+
+        if (!actualizado) {
+            throw new ResponseStatusException(HttpStatus.NOT_MODIFIED, "No se detectaron cambios en el usuario");
+        }
+
+        usuarioRepository.save(usuario);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", ResponseMessages.USUARIO_ACTUALIZADO);
+        response.put("usuario", usuarioConverter.toResponseDTO(usuario));
+        return response;
     }
 
-    private void validarDatosTrabajador(UsuarioDTO usuarioDTO) {
+    @Transactional
+    public Map<String, Object> crearTrabajador(
+            UsuarioDTO usuarioDTO, 
+            MultipartFile foto, 
+            MultipartFile documentoContrato,
+            String fechaInicioContrato,
+            String fechaFinContrato,
+            String tipoContrato,
+            String salario) {
+        
+        // Configurar el rol como trabajador
+        usuarioDTO.setRole(RolUsuario.trabajador.name());
+        
+        // Preparar el contrato
         if (usuarioDTO.getContrato() == null) {
-            throw new RuntimeException(ValidationErrorMessages.TRABAJADOR_SIN_CONTRATO);
+            usuarioDTO.setContrato(new ContratoDTO());
         }
-        if (usuarioDTO.getServiciosIds() == null || usuarioDTO.getServiciosIds().isEmpty()) {
-            throw new RuntimeException(ValidationErrorMessages.TRABAJADOR_SIN_SERVICIOS);
+        
+        // Procesar la fecha de inicio
+        try {
+            java.sql.Date fechaInicio = java.sql.Date.valueOf(fechaInicioContrato);
+            usuarioDTO.getContrato().setFechaInicioContrato(fechaInicio);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Formato de fecha de inicio incorrecto. Use YYYY-MM-DD");
         }
-        if (usuarioDTO.getHorariosIds() == null || usuarioDTO.getHorariosIds().isEmpty()) {
-            throw new RuntimeException(ValidationErrorMessages.TRABAJADOR_SIN_HORARIOS);
+        
+        // Procesar fecha fin si existe
+        if (fechaFinContrato != null && !fechaFinContrato.isEmpty()) {
+            try {
+                java.sql.Date fechaFin = java.sql.Date.valueOf(fechaFinContrato);
+                usuarioDTO.getContrato().setFechaFinContrato(fechaFin);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Formato de fecha de fin incorrecto. Use YYYY-MM-DD");
+            }
+        }
+        
+        // Procesar tipo de contrato
+        try {
+            usuarioDTO.getContrato().setTipoContrato(TipoContrato.valueOf(tipoContrato.toLowerCase()));
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Tipo de contrato no válido");
+        }
+        
+        // Procesar salario
+        try {
+            BigDecimal salarioDecimal = new BigDecimal(salario);
+            usuarioDTO.getContrato().setSalario(salarioDecimal);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("El salario debe ser un número válido");
+        }
+        
+        // Asignar el documento del contrato
+        usuarioDTO.setDocumentoContrato(documentoContrato);
+        
+        // Crear el trabajador con todos los datos
+        return crear(usuarioDTO, foto, documentoContrato);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerCarrito() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+
+        // Si el carrito es null, inicializarlo como array vacío
+        if (usuario.getCarrito() == null) {
+            usuario.setCarrito("[]");
+            usuarioRepository.save(usuario);
         }
 
-        // Validar que los servicios existan
-        List<Servicio> servicios = servicioRepository.findAllById(usuarioDTO.getServiciosIds());
-        if (servicios.size() != usuarioDTO.getServiciosIds().size()) {
-            throw new ResourceNotFoundException(ValidationErrorMessages.SERVICIOS_NO_ENCONTRADOS);
-        }
-
-        // Validar que los horarios existan
-        List<Horario> horarios = horarioRepository.findAllById(usuarioDTO.getHorariosIds());
-        if (horarios.size() != usuarioDTO.getHorariosIds().size()) {
-            throw new ResourceNotFoundException(ValidationErrorMessages.HORARIOS_NO_ENCONTRADOS);
-        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Carrito recuperado exitosamente");
+        response.put("carrito", usuario.getCarrito());
+        return response;
     }
 
     private void gestionarDatosTrabajador(Usuario usuario, UsuarioDTO usuarioDTO) {
@@ -465,5 +648,161 @@ public class UsuarioService {
             throw new ResourceNotFoundException("Imagen no encontrada");
         }
         return Files.readAllBytes(imagePath);
+    }
+
+    @Transactional
+    public Map<String, Object> actualizarCarrito(List<Map<String, Object>> nuevosProdutos) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+        
+        if (!usuario.getRol().equals(RolUsuario.cliente)) {
+            throw new RuntimeException("Solo los clientes pueden modificar el carrito");
+        }
+
+        try {
+            // Obtener el carrito actual
+            List<Map<String, Object>> carritoActual = new ArrayList<>();
+            if (usuario.getCarrito() != null && !usuario.getCarrito().equals("[]")) {
+                carritoActual = objectMapper.readValue(usuario.getCarrito(), 
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class));
+            }
+
+            // Por cada nuevo producto
+            for (Map<String, Object> nuevoItem : nuevosProdutos) {
+                // Validar que solo vengan los campos permitidos
+                Set<String> camposPermitidos = Set.of("productoId", "cantidad");
+                Set<String> camposRecibidos = nuevoItem.keySet();
+                
+                Set<String> camposNoPermitidos = new HashSet<>(camposRecibidos);
+                camposNoPermitidos.removeAll(camposPermitidos);
+                
+                if (!camposNoPermitidos.isEmpty()) {
+                    throw new RuntimeException("Campos no permitidos en el carrito: " + String.join(", ", camposNoPermitidos) + 
+                                            ". Solo se permiten: productoId y cantidad");
+                }
+
+                // Validar que el item tenga los campos necesarios
+                if (!nuevoItem.containsKey("productoId") || !nuevoItem.containsKey("cantidad")) {
+                    throw new RuntimeException("Cada item del carrito debe tener productoId y cantidad");
+                }
+
+                Integer productoId = ((Number) nuevoItem.get("productoId")).intValue();
+                Integer cantidad = ((Number) nuevoItem.get("cantidad")).intValue();
+
+                // Validar que el producto existe
+                Producto producto = productoRepository.findById(productoId)
+                    .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + productoId));
+
+                // Buscar si el producto ya existe en el carrito
+                boolean productoEncontrado = false;
+                Iterator<Map<String, Object>> iterator = carritoActual.iterator();
+                
+                while (iterator.hasNext()) {
+                    Map<String, Object> itemExistente = iterator.next();
+                    if (itemExistente.get("productoId").equals(productoId)) {
+                        productoEncontrado = true;
+                        int cantidadActual = ((Number) itemExistente.get("cantidad")).intValue();
+                        
+                        if (cantidad == 0) {
+                            // Si la cantidad es 0, eliminar el producto
+                            iterator.remove();
+                        } else if (cantidad < 0) {
+                            // Si la cantidad es negativa, restar del total
+                            int cantidadARestar = Math.abs(cantidad);
+                            int nuevaCantidad = cantidadActual - cantidadARestar;
+                            
+                            if (nuevaCantidad <= 0) {
+                                // Si la nueva cantidad es 0 o negativa, eliminar el producto
+                                iterator.remove();
+                            } else {
+                                // Actualizar la cantidad
+                                itemExistente.put("cantidad", nuevaCantidad);
+                            }
+                        } else {
+                            // Si la cantidad es positiva, sumar al total
+                            int cantidadTotal = cantidadActual + cantidad;
+                            
+                            // Validar stock para la cantidad total
+                            if (producto.getStock() < cantidadTotal) {
+                                throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre());
+                            }
+                            
+                            itemExistente.put("cantidad", cantidadTotal);
+                        }
+                        break;
+                    }
+                }
+
+                // Si el producto no existía y la cantidad es positiva, añadirlo al carrito
+                if (!productoEncontrado && cantidad > 0) {
+                    // Validar stock
+                    if (producto.getStock() < cantidad) {
+                        throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre());
+                    }
+
+                    Map<String, Object> nuevoItemValidado = new HashMap<>();
+                    nuevoItemValidado.put("productoId", productoId);
+                    nuevoItemValidado.put("nombreProducto", producto.getNombre());
+                    nuevoItemValidado.put("cantidad", cantidad);
+                    nuevoItemValidado.put("precioUnitario", producto.getPrecio());
+                    carritoActual.add(nuevoItemValidado);
+                }
+            }
+
+            // Convertir a JSON sin formato
+            String carritoJson = objectMapper.writeValueAsString(carritoActual);
+            
+            // Actualizar carrito del usuario
+            usuario.setCarrito(carritoJson);
+            usuarioRepository.save(usuario);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Carrito actualizado exitosamente");
+            response.put("carrito", carritoJson);
+            return response;
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Error al actualizar el carrito: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public Map<String, Object> vaciarCarrito() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+        
+        if (!usuario.getRol().equals(RolUsuario.cliente)) {
+            throw new RuntimeException("Solo los clientes pueden vaciar el carrito");
+        }
+
+        usuario.setCarrito("[]");
+        usuarioRepository.save(usuario);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Carrito vaciado exitosamente");
+        return response;
+    }
+
+    private boolean isValidRole(String role) {
+        try {
+            RolUsuario.valueOf(role.toLowerCase());
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private void validarDatosTrabajador(UsuarioDTO usuarioDTO) {
+        if (usuarioDTO == null) {
+            throw new IllegalArgumentException("Los datos del trabajador no pueden ser nulos");
+        }
+        if (usuarioDTO.getServiciosIds() == null || usuarioDTO.getServiciosIds().isEmpty()) {
+            throw new RuntimeException(ValidationErrorMessages.TRABAJADOR_SIN_SERVICIOS);
+        }
+        if (usuarioDTO.getHorariosIds() == null || usuarioDTO.getHorariosIds().isEmpty()) {
+            throw new RuntimeException(ValidationErrorMessages.TRABAJADOR_SIN_HORARIOS);
+        }
     }
 } 

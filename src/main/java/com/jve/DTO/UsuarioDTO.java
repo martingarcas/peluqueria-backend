@@ -35,11 +35,6 @@ public class UsuarioDTO {
     private String telefono;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @NotBlank(message = ValidationErrorMessages.AUTH_PASSWORD_REQUERIDO)
-    @Pattern(
-        regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
-        message = ValidationErrorMessages.AUTH_PASSWORD_FORMATO
-    )
     private String password;
 
     private String role;
@@ -87,5 +82,31 @@ public class UsuarioDTO {
                !Objects.equals(this.direccion, otro.direccion) ||
                !Objects.equals(this.telefono, otro.telefono) ||
                !Objects.equals(this.role, otro.role);
+    }
+    
+    // Validamos la contraseña cuando se crea un usuario o cuando se proporciona una contraseña
+    @AssertTrue(message = ValidationErrorMessages.AUTH_PASSWORD_FORMATO)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    public boolean isPasswordFormatValid() {
+        // Si el ID es nulo (creación), la contraseña es obligatoria y debe cumplir el formato
+        if (id == null) {
+            return password != null && 
+                   password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
+        }
+        
+        // Si es una actualización, solo validamos el formato si se proporciona una contraseña
+        return password == null || password.isEmpty() || 
+               password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
+    }
+    
+    // Validamos que la contraseña sea obligatoria solo en creación
+    @AssertTrue(message = ValidationErrorMessages.AUTH_PASSWORD_REQUERIDO)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    public boolean isPasswordPresent() {
+        // Solo verificamos que exista la contraseña en la creación
+        if (id == null) {
+            return password != null && !password.isEmpty();
+        }
+        return true;
     }
 } 
