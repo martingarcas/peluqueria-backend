@@ -107,12 +107,31 @@ public class UsuarioService {
             throw new IllegalArgumentException("El rol especificado no es válido. Roles válidos: cliente, trabajador, admin");
         }
 
-        // Si es trabajador, asegurarse que el documento del contrato está presente
+        // Si es trabajador, validar datos adicionales
         if (usuarioDTO.getRole() != null && 
             RolUsuario.trabajador.name().equalsIgnoreCase(usuarioDTO.getRole())) {
+            
+            // Validar que tenga servicios y horarios asignados
+            if (usuarioDTO.getServiciosIds() == null || usuarioDTO.getServiciosIds().isEmpty()) {
+                throw new RuntimeException(ValidationErrorMessages.TRABAJADOR_SERVICIOS_REQUERIDOS);
+            }
+            if (usuarioDTO.getHorariosIds() == null || usuarioDTO.getHorariosIds().isEmpty()) {
+                throw new RuntimeException(ValidationErrorMessages.TRABAJADOR_HORARIOS_REQUERIDOS);
+            }
+
+            // Validar que el documento del contrato esté presente
             if (documentoContrato == null || documentoContrato.isEmpty()) {
                 throw new RuntimeException(ValidationErrorMessages.TRABAJADOR_CONTRATO_REQUERIDO);
             }
+
+            // Validar que los servicios y horarios existan
+            try {
+                validarServiciosExisten(usuarioDTO.getServiciosIds());
+                validarHorariosExisten(usuarioDTO.getHorariosIds());
+            } catch (RuntimeException e) {
+                throw new RuntimeException("Error validando servicios/horarios: " + e.getMessage());
+            }
+
             // Asignar el documento al DTO para procesarlo
             usuarioDTO.setDocumentoContrato(documentoContrato);
         }
@@ -120,15 +139,6 @@ public class UsuarioService {
         // Crear el usuario
         Usuario usuario = usuarioConverter.toEntity(usuarioDTO);
         usuario.setPassword(passwordEncoder.encode(usuarioDTO.getPassword()));
-
-        // Guardar el usuario
-        Usuario usuarioGuardado = usuarioRepository.save(usuario);
-
-        // Si el usuario es un trabajador, gestionar datos adicionales
-        if (usuarioDTO.getRole() != null && 
-            RolUsuario.trabajador.name().equalsIgnoreCase(usuarioDTO.getRole())) {
-            gestionarDatosTrabajador(usuarioGuardado, usuarioDTO);
-        }
 
         // Guardar foto si existe
         if (foto != null && !foto.isEmpty()) {
@@ -148,9 +158,32 @@ public class UsuarioService {
 
                 // Actualizar URL de la foto
                 usuario.setFoto("/uploads/users/fotos/" + nombreArchivo);
-                usuarioGuardado = usuarioRepository.save(usuarioGuardado);
             } catch (IOException e) {
                 throw new RuntimeException("Error al guardar la foto del usuario", e);
+            }
+        }
+
+        // Guardar el usuario
+        Usuario usuarioGuardado = usuarioRepository.save(usuario);
+
+        // Si el usuario es un trabajador, gestionar datos adicionales
+        if (usuarioDTO.getRole() != null && 
+            RolUsuario.trabajador.name().equalsIgnoreCase(usuarioDTO.getRole())) {
+            try {
+                gestionarDatosTrabajador(usuarioGuardado, usuarioDTO);
+            } catch (Exception e) {
+                // Si hay error al gestionar datos del trabajador, revertir todo
+                usuarioRepository.delete(usuarioGuardado);
+                if (usuario.getFoto() != null) {
+                    try {
+                        Path fotoPath = Paths.get(usuario.getFoto().replace("/uploads/", "uploads/"));
+                        Files.deleteIfExists(fotoPath);
+                    } catch (IOException ioEx) {
+                        // Log error pero continuar con el rollback
+                        System.err.println("Error eliminando foto: " + ioEx.getMessage());
+                    }
+                }
+                throw new RuntimeException("Error al gestionar datos del trabajador: " + e.getMessage());
             }
         }
 
@@ -429,17 +462,27 @@ public class UsuarioService {
     }
 
     private void gestionarDatosTrabajador(Usuario usuario, UsuarioDTO usuarioDTO) {
-        // Establecer el ID del usuario en el contrato
-        usuarioDTO.getContrato().setUsuarioId(usuario.getId());
-        contratoService.crear(usuarioDTO.getContrato(), usuarioDTO.getDocumentoContrato());
-        
-        List<Servicio> servicios = servicioRepository.findAllById(usuarioDTO.getServiciosIds());
-        usuario.setServicios(servicios);
-        
-        List<Horario> horarios = horarioRepository.findAllById(usuarioDTO.getHorariosIds());
-        usuario.setHorarios(horarios);
-        
-        usuarioRepository.save(usuario);
+        try {
+            // Establecer el ID del usuario en el contrato
+            usuarioDTO.getContrato().setUsuarioId(usuario.getId());
+            contratoService.crear(usuarioDTO.getContrato(), usuarioDTO.getDocumentoContrato());
+            
+            List<Servicio> servicios = servicioRepository.findAllById(usuarioDTO.getServiciosIds());
+            if (servicios.size() != usuarioDTO.getServiciosIds().size()) {
+                throw new RuntimeException(ValidationErrorMessages.SERVICIOS_NO_ENCONTRADOS);
+            }
+            usuario.setServicios(servicios);
+            
+            List<Horario> horarios = horarioRepository.findAllById(usuarioDTO.getHorariosIds());
+            if (horarios.size() != usuarioDTO.getHorariosIds().size()) {
+                throw new RuntimeException(ValidationErrorMessages.HORARIOS_NO_ENCONTRADOS);
+            }
+            usuario.setHorarios(horarios);
+            
+            usuarioRepository.save(usuario);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al gestionar datos del trabajador: " + e.getMessage());
+        }
     }
 
     @Transactional
