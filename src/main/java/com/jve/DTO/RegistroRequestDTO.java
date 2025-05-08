@@ -39,7 +39,6 @@ public record RegistroRequestDTO(
     @NotBlank(message = ValidationErrorMessages.AUTH_APELLIDOS_REQUERIDOS) 
     String apellidos,
     
-    @NotBlank(message = ValidationErrorMessages.AUTH_DIRECCION_REQUERIDA) 
     String direccion,
     
     @NotBlank(message = ValidationErrorMessages.AUTH_TELEFONO_REQUERIDO) 

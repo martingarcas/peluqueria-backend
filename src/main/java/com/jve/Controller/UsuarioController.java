@@ -45,7 +45,7 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
     private final UsuarioConverter usuarioConverter;
-    private final String UPLOAD_DIR = "uploads/users/";
+    private final String UPLOAD_DIR = "/uploads/users/";
     private final UsuarioRepository usuarioRepository;
     private final ProductoRepository productoRepository;
     private final ObjectMapper objectMapper;
@@ -159,9 +159,9 @@ public class UsuarioController {
             errores.put("email", ValidationErrorMessages.AUTH_EMAIL_FORMATO);
         }
 
-        if (usuarioDTO.getDireccion() == null || usuarioDTO.getDireccion().trim().isEmpty()) {
-            errores.put("direccion", ValidationErrorMessages.AUTH_DIRECCION_REQUERIDA);
-        } else if (usuarioDTO.getDireccion().length() < 5 || usuarioDTO.getDireccion().length() > 200) {
+        // La dirección ya no es obligatoria, solo validamos el formato si se proporciona
+        if (usuarioDTO.getDireccion() != null && !usuarioDTO.getDireccion().trim().isEmpty() && 
+            (usuarioDTO.getDireccion().length() < 5 || usuarioDTO.getDireccion().length() > 200)) {
             errores.put("direccion", "La dirección debe tener entre 5 y 200 caracteres");
         }
 
@@ -304,8 +304,9 @@ public class UsuarioController {
             errores.put("email", ValidationErrorMessages.AUTH_EMAIL_FORMATO);
         }
 
-        if (usuarioDTO.getDireccion() != null && (usuarioDTO.getDireccion().trim().isEmpty() || 
-            usuarioDTO.getDireccion().length() < 5 || usuarioDTO.getDireccion().length() > 200)) {
+        // La dirección ya no es obligatoria, solo validamos el formato si se proporciona
+        if (usuarioDTO.getDireccion() != null && !usuarioDTO.getDireccion().trim().isEmpty() && 
+            (usuarioDTO.getDireccion().length() < 5 || usuarioDTO.getDireccion().length() > 200)) {
             errores.put("direccion", "La dirección debe tener entre 5 y 200 caracteres");
         }
 
