@@ -15,6 +15,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -265,6 +267,41 @@ public class ContratoService {
         }
 
         System.out.println("Tarea programada ejecutada: estados de contratos actualizados.");
+    }
+
+    @Transactional(readOnly = true)
+    public Contrato obtenerContratoActual(Integer usuarioId) {
+        return contratoRepository.findByUsuarioIdAndEstadoNombre(usuarioId, "ACTIVO")
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.CONTRATO_NO_ENCONTRADO));
+    }
+
+    @Transactional(readOnly = true)
+    public Resource descargarPDF(Integer usuarioId) {
+        // Obtener el contrato más reciente del usuario
+        List<Contrato> contratos = contratoRepository.findByUsuarioId(usuarioId);
+        if (contratos.isEmpty()) {
+            throw new RuntimeException(ValidationErrorMessages.CONTRATO_NO_ENCONTRADO);
+        }
+        
+        // Ordenar por fecha de inicio descendente y tomar el primero
+        Contrato contrato = contratos.stream()
+            .sorted((c1, c2) -> c2.getFechaInicioContrato().compareTo(c1.getFechaInicioContrato()))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.CONTRATO_NO_ENCONTRADO));
+
+        if (contrato.getUrlContrato() == null) {
+            throw new RuntimeException(ValidationErrorMessages.ARCHIVO_NO_ENCONTRADO);
+        }
+
+        // Construir la ruta al archivo
+        Path filePath = Paths.get("uploads").resolve(contrato.getUrlContrato().substring(1));
+        Resource resource = new FileSystemResource(filePath.toFile());
+
+        if (!resource.exists()) {
+            throw new RuntimeException(ValidationErrorMessages.ARCHIVO_NO_ENCONTRADO);
+        }
+
+        return resource;
     }
 
 } 

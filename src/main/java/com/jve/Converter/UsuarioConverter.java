@@ -32,6 +32,8 @@ public class UsuarioConverter {
     public RegistroResponseDTO toResponseDTO(Usuario usuario) {
         RegistroResponseDTO dto = modelMapper.map(usuario, RegistroResponseDTO.class);
         dto.setRole(usuario.getRol().name());
+        dto.setFechaRegistro(usuario.getFechaRegistro() != null ? 
+            usuario.getFechaRegistro().toString() : null);
         
         // Convertir servicios y horarios si el usuario es un trabajador
         if (usuario.getRol() == RolUsuario.trabajador) {

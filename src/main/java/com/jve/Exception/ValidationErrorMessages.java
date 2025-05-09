@@ -145,4 +145,7 @@ public class ValidationErrorMessages {
     public static final String CITA_YA_CANCELADA = "La cita ya está cancelada";
     public static final String CITA_YA_COMPLETADA = "La cita ya está completada";
     public static final String CITA_LISTA_VACIA = "La lista de citas no puede estar vacía";
+
+    // Mensajes para Archivo
+    public static final String ARCHIVO_NO_ENCONTRADO = "El archivo solicitado no fue encontrado";
 } 

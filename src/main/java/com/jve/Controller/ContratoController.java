@@ -1,10 +1,14 @@
 package com.jve.Controller;
 
 import com.jve.DTO.ContratoDTO;
+import com.jve.Entity.Contrato;
 import com.jve.Entity.TipoContrato;
 import com.jve.Service.ContratoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +17,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -116,6 +122,20 @@ public class ContratoController {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
+
+    @GetMapping("/usuario/{usuarioId}/pdf")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Resource> descargarPDF(@PathVariable Integer usuarioId) {
+        try {
+            Resource resource = contratoService.descargarPDF(usuarioId);
+            return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"contrato.pdf\"")
+                .body(resource);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 } 

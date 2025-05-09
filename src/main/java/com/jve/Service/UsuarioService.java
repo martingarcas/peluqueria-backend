@@ -140,6 +140,7 @@ public class UsuarioService {
         // Crear el usuario
         Usuario usuario = usuarioConverter.toEntity(usuarioDTO);
         usuario.setPassword(passwordEncoder.encode(usuarioDTO.getPassword()));
+        usuario.setFechaRegistro(new Date());
 
         // Guardar foto si existe
         if (foto != null && !foto.isEmpty()) {

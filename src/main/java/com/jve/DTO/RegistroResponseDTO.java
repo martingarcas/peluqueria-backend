@@ -17,6 +17,7 @@ public class RegistroResponseDTO {
     private String direccion;
     private String telefono;
     private String foto;
+    private String fechaRegistro;
     private List<ServicioSimpleDTO> servicios;
     private List<HorarioSimpleDTO> horarios;
     
