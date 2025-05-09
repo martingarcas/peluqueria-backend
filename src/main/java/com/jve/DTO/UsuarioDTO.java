@@ -95,7 +95,7 @@ public class UsuarioDTO {
         }
         
         // Si es una actualización, solo validamos el formato si se proporciona una contraseña
-        return password == null || password.isEmpty() || 
+        return password == null || password.trim().isEmpty() || 
                password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
     }
     
@@ -105,7 +105,7 @@ public class UsuarioDTO {
     public boolean isPasswordPresent() {
         // Solo verificamos que exista la contraseña en la creación
         if (id == null) {
-            return password != null && !password.isEmpty();
+            return password != null && !password.trim().isEmpty();
         }
         return true;
     }

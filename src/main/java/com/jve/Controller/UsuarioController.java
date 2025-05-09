@@ -72,18 +72,11 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> actualizar(
             @PathVariable Integer id,
-            @Valid @RequestPart("usuario") UsuarioDTO usuarioDTO,
+            @RequestPart("usuario") UsuarioDTO usuarioDTO,
             @RequestPart(value = "foto", required = false) MultipartFile foto,
             @RequestPart(value = "documentoContrato", required = false) MultipartFile documentoContrato) {
-        try {
-            usuarioDTO.setId(id);
-            Map<String, Object> response = usuarioService.actualizar(id, usuarioDTO, foto, documentoContrato);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
-        } catch (RuntimeException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
+        usuarioDTO.setId(id);
+        return ResponseEntity.ok(usuarioService.actualizar(id, usuarioDTO, foto, documentoContrato));
     }
 
     @DeleteMapping("/{id}")
@@ -103,17 +96,10 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> actualizarParcial(
             @PathVariable Integer id,
-            @Valid @RequestPart("usuario") UsuarioDTO usuarioDTO,
+            @RequestPart("usuario") UsuarioDTO usuarioDTO,
             @RequestPart(value = "foto", required = false) MultipartFile foto) {
-        try {
-            usuarioDTO.setId(id);
-            Map<String, Object> response = usuarioService.actualizarParcial(id, usuarioDTO, foto);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
-        } catch (RuntimeException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
+        usuarioDTO.setId(id);
+        return ResponseEntity.ok(usuarioService.actualizarParcial(id, usuarioDTO, foto));
     }
 
     // Endpoint específico para crear trabajadores con toda la información necesaria

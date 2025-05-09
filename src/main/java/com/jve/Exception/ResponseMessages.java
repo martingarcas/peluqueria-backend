@@ -56,4 +56,12 @@ public class ResponseMessages {
     // Mensajes para Fotos
     public static final String FOTO_GUARDADA = "Foto guardada exitosamente";
     public static final String FOTO_ELIMINADA = "Foto eliminada exitosamente";
+
+    // Mensajes para Citas
+    public static final String CITAS_LISTADAS = "Citas recuperadas exitosamente";
+    public static final String CITA_CREADA = "Cita creada exitosamente";
+    public static final String CITA_ACTUALIZADA = "Estado de la cita actualizado exitosamente";
+    public static final String DISPONIBILIDAD_RECUPERADA = "Disponibilidad recuperada exitosamente";
+    public static final String TRABAJADORES_NO_DISPONIBLES_LISTADOS = "Trabajadores no disponibles recuperados exitosamente";
+    public static final String HORARIOS_LISTADOS = "Horarios recuperados exitosamente";
 } 

@@ -76,6 +76,7 @@ public class HorarioService {
         Horario horario = horarioRepository.findById(id)
             .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.HORARIO_NO_ENCONTRADO));
 
+        response.put("mensaje", ResponseMessages.ENTIDAD_RECUPERADA);
         response.put("horario", horarioConverter.toDTO(horario));
         return response;
     }
@@ -89,6 +90,7 @@ public class HorarioService {
             .map(horarioConverter::toDTO)
             .toList();
 
+        response.put("mensaje", ResponseMessages.HORARIOS_LISTADOS);
         response.put("horarios", horariosDTO);
         return response;
     }

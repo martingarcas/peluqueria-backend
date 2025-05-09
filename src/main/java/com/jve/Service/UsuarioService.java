@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -196,84 +197,76 @@ public class UsuarioService {
 
     @Transactional
     public Map<String, Object> actualizar(Integer id, UsuarioDTO usuarioDTO, MultipartFile foto, MultipartFile documentoContrato) {
-        Usuario usuario = usuarioRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+        try {
+            Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
 
-        // Validar que el email no exista si se está cambiando
-        if (!usuario.getEmail().equals(usuarioDTO.getEmail()) && 
-            usuarioRepository.existsByEmail(usuarioDTO.getEmail())) {
-            throw new ResourceAlreadyExistsException(ValidationErrorMessages.AUTH_EMAIL_YA_REGISTRADO);
-        }
-
-        // Verificar si hay cambios
-        if (!usuarioDTO.tieneModificaciones(usuarioConverter.toDTO(usuario))) {
-            throw new ResponseStatusException(HttpStatus.NOT_MODIFIED);
-        }
-
-        // Actualizar datos básicos
-        usuario.setNombre(usuarioDTO.getNombre());
-        usuario.setApellidos(usuarioDTO.getApellidos());
-        usuario.setEmail(usuarioDTO.getEmail());
-        usuario.setDireccion(usuarioDTO.getDireccion());
-        usuario.setTelefono(usuarioDTO.getTelefono());
-
-        if (usuarioDTO.getPassword() != null && !usuarioDTO.getPassword().isEmpty()) {
-            usuario.setPassword(passwordEncoder.encode(usuarioDTO.getPassword()));
-        }
-
-        // Si hay cambio de rol a trabajador
-        if (usuarioDTO.getRole() != null && 
-            RolUsuario.trabajador.name().equalsIgnoreCase(usuarioDTO.getRole()) && 
-            usuario.getRol() != RolUsuario.trabajador) {
-            
-            if (documentoContrato == null || documentoContrato.isEmpty()) {
-                throw new RuntimeException(ValidationErrorMessages.TRABAJADOR_CONTRATO_REQUERIDO);
+            // Validar que el email no exista si se está cambiando
+            if (!usuario.getEmail().equals(usuarioDTO.getEmail()) && 
+                usuarioRepository.existsByEmail(usuarioDTO.getEmail())) {
+                throw new ResourceAlreadyExistsException(ValidationErrorMessages.AUTH_EMAIL_YA_REGISTRADO);
             }
-            
-            usuarioDTO.setDocumentoContrato(documentoContrato);
-            validarDatosTrabajador(usuarioDTO);
-            usuario.setRol(RolUsuario.trabajador);
+
+            // Actualizar datos básicos
+            usuario.setNombre(usuarioDTO.getNombre());
+            usuario.setApellidos(usuarioDTO.getApellidos());
+            usuario.setEmail(usuarioDTO.getEmail());
+            usuario.setDireccion(usuarioDTO.getDireccion());
+            usuario.setTelefono(usuarioDTO.getTelefono());
+
+            // Actualizar contraseña solo si se proporciona y cumple el formato
+            String password = usuarioDTO.getPassword();
+            if (password != null && !password.trim().isEmpty()) {
+                if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")) {
+                    Map<String, Object> response = new HashMap<>();
+                    Map<String, String> errores = new HashMap<>();
+                    errores.put("password", ValidationErrorMessages.AUTH_PASSWORD_FORMATO);
+                    response.put("mensaje", "Error de validación");
+                    response.put("errores", errores);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error de validación", 
+                        new RuntimeException(objectMapper.writeValueAsString(response)));
+                }
+                usuario.setPassword(passwordEncoder.encode(password));
+            }
+
+            // Actualizar foto si existe
+            if (foto != null && !foto.isEmpty()) {
+                try {
+                    // Eliminar foto anterior si existe
+                    if (usuario.getFoto() != null && !usuario.getFoto().isEmpty()) {
+                        Path fotoAnterior = Paths.get(usuario.getFoto().replace("/uploads/", UPLOAD_DIR));
+                        Files.deleteIfExists(fotoAnterior);
+                    }
+
+                    // Crear el directorio si no existe
+                    Path uploadPath = Paths.get(UPLOAD_DIR_FOTOS);
+                    if (!Files.exists(uploadPath)) {
+                        Files.createDirectories(uploadPath);
+                    }
+
+                    // Generar nombre único para el archivo
+                    String nombreArchivo = UUID.randomUUID().toString() + "_" + foto.getOriginalFilename();
+                    Path filePath = uploadPath.resolve(nombreArchivo);
+
+                    // Guardar archivo
+                    Files.copy(foto.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                    // Actualizar URL de la foto
+                    usuario.setFoto("/uploads/users/fotos/" + nombreArchivo);
+                } catch (IOException e) {
+                    throw new RuntimeException("Error al guardar la foto del usuario", e);
+                }
+            }
+
             usuario = usuarioRepository.save(usuario);
-            gestionarDatosTrabajador(usuario, usuarioDTO);
-        } else if (usuarioDTO.getRole() != null) {
-            usuario.setRol(RolUsuario.valueOf(usuarioDTO.getRole().toLowerCase()));
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", ResponseMessages.USUARIO_ACTUALIZADO);
+            response.put("usuario", usuarioConverter.toResponseDTO(usuario));
+            return response;
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error al procesar la validación", e);
         }
-
-        // Actualizar foto si existe
-        if (foto != null && !foto.isEmpty()) {
-            try {
-                // Eliminar foto anterior si existe
-                if (usuario.getFoto() != null && !usuario.getFoto().isEmpty()) {
-                    Path fotoAnterior = Paths.get(usuario.getFoto());
-                    Files.deleteIfExists(fotoAnterior);
-                }
-
-                // Crear el directorio si no existe
-                Path uploadPath = Paths.get(UPLOAD_DIR_FOTOS);
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-
-                // Generar nombre único para el archivo
-                String nombreArchivo = UUID.randomUUID().toString() + "_" + foto.getOriginalFilename();
-                Path filePath = uploadPath.resolve(nombreArchivo);
-
-                // Guardar archivo
-                Files.copy(foto.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-                // Actualizar URL de la foto
-                usuario.setFoto("/uploads/users/fotos/" + nombreArchivo);
-            } catch (IOException e) {
-                throw new RuntimeException("Error al guardar la foto del usuario", e);
-            }
-        }
-
-        usuario = usuarioRepository.save(usuario);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("mensaje", ResponseMessages.USUARIO_ACTUALIZADO);
-        response.put("usuario", usuarioConverter.toResponseDTO(usuario));
-        return response;
     }
 
     @Transactional
@@ -301,88 +294,103 @@ public class UsuarioService {
 
     @Transactional
     public Map<String, Object> actualizarParcial(Integer id, UsuarioDTO usuarioDTO, MultipartFile foto) {
-        Usuario usuario = usuarioRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
+        try {
+            Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
 
-        // Actualizar datos básicos si se proporcionan
-        boolean actualizado = false;
+            // Actualizar datos básicos si se proporcionan
+            boolean actualizado = false;
 
-        if (usuarioDTO.getNombre() != null && !usuarioDTO.getNombre().isEmpty()) {
-            usuario.setNombre(usuarioDTO.getNombre());
-            actualizado = true;
-        }
-
-        if (usuarioDTO.getApellidos() != null && !usuarioDTO.getApellidos().isEmpty()) {
-            usuario.setApellidos(usuarioDTO.getApellidos());
-            actualizado = true;
-        }
-
-        if (usuarioDTO.getEmail() != null && !usuarioDTO.getEmail().isEmpty() && 
-            !usuario.getEmail().equals(usuarioDTO.getEmail())) {
-            
-            if (usuarioRepository.existsByEmail(usuarioDTO.getEmail())) {
-                throw new ResourceAlreadyExistsException(ValidationErrorMessages.AUTH_EMAIL_YA_REGISTRADO);
-            }
-            
-            usuario.setEmail(usuarioDTO.getEmail());
-            actualizado = true;
-        }
-
-        if (usuarioDTO.getDireccion() != null) {
-            usuario.setDireccion(usuarioDTO.getDireccion());
-            actualizado = true;
-        }
-
-        if (usuarioDTO.getTelefono() != null && !usuarioDTO.getTelefono().isEmpty()) {
-            usuario.setTelefono(usuarioDTO.getTelefono());
-            actualizado = true;
-        }
-
-        if (usuarioDTO.getPassword() != null && !usuarioDTO.getPassword().isEmpty()) {
-            usuario.setPassword(passwordEncoder.encode(usuarioDTO.getPassword()));
-            actualizado = true;
-        }
-
-        // Actualizar foto si viene en la petición
-        if (foto != null && !foto.isEmpty()) {
-            try {
-                // Eliminar foto anterior si existe
-                if (usuario.getFoto() != null && !usuario.getFoto().isEmpty()) {
-                    Path fotoAnterior = Paths.get(usuario.getFoto());
-                    Files.deleteIfExists(fotoAnterior);
-                }
-
-                // Crear el directorio si no existe
-                Path uploadPath = Paths.get(UPLOAD_DIR_FOTOS);
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-
-                // Generar nombre único para el archivo
-                String nombreArchivo = UUID.randomUUID().toString() + "_" + foto.getOriginalFilename();
-                Path filePath = uploadPath.resolve(nombreArchivo);
-
-                // Guardar archivo
-                Files.copy(foto.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-                // Actualizar URL de la foto
-                usuario.setFoto("/uploads/users/fotos/" + nombreArchivo);
+            if (usuarioDTO.getNombre() != null && !usuarioDTO.getNombre().isEmpty()) {
+                usuario.setNombre(usuarioDTO.getNombre());
                 actualizado = true;
-            } catch (IOException e) {
-                throw new RuntimeException("Error al guardar la foto del usuario", e);
             }
+
+            if (usuarioDTO.getApellidos() != null && !usuarioDTO.getApellidos().isEmpty()) {
+                usuario.setApellidos(usuarioDTO.getApellidos());
+                actualizado = true;
+            }
+
+            if (usuarioDTO.getEmail() != null && !usuarioDTO.getEmail().isEmpty() && 
+                !usuario.getEmail().equals(usuarioDTO.getEmail())) {
+                
+                if (usuarioRepository.existsByEmail(usuarioDTO.getEmail())) {
+                    throw new ResourceAlreadyExistsException(ValidationErrorMessages.AUTH_EMAIL_YA_REGISTRADO);
+                }
+                
+                usuario.setEmail(usuarioDTO.getEmail());
+                actualizado = true;
+            }
+
+            if (usuarioDTO.getDireccion() != null) {
+                usuario.setDireccion(usuarioDTO.getDireccion());
+                actualizado = true;
+            }
+
+            if (usuarioDTO.getTelefono() != null && !usuarioDTO.getTelefono().isEmpty()) {
+                usuario.setTelefono(usuarioDTO.getTelefono());
+                actualizado = true;
+            }
+
+            // Actualizar contraseña solo si se proporciona y cumple el formato
+            String password = usuarioDTO.getPassword();
+            if (password != null && !password.trim().isEmpty()) {
+                if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")) {
+                    Map<String, Object> response = new HashMap<>();
+                    Map<String, String> errores = new HashMap<>();
+                    errores.put("password", ValidationErrorMessages.AUTH_PASSWORD_FORMATO);
+                    response.put("mensaje", "Error de validación");
+                    response.put("errores", errores);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error de validación", 
+                        new RuntimeException(objectMapper.writeValueAsString(response)));
+                }
+                usuario.setPassword(passwordEncoder.encode(password));
+                actualizado = true;
+            }
+
+            // Actualizar foto si viene en la petición
+            if (foto != null && !foto.isEmpty()) {
+                try {
+                    // Eliminar foto anterior si existe
+                    if (usuario.getFoto() != null && !usuario.getFoto().isEmpty()) {
+                        Path fotoAnterior = Paths.get(usuario.getFoto().replace("/uploads/", UPLOAD_DIR));
+                        Files.deleteIfExists(fotoAnterior);
+                    }
+
+                    // Crear el directorio si no existe
+                    Path uploadPath = Paths.get(UPLOAD_DIR_FOTOS);
+                    if (!Files.exists(uploadPath)) {
+                        Files.createDirectories(uploadPath);
+                    }
+
+                    // Generar nombre único para el archivo
+                    String nombreArchivo = UUID.randomUUID().toString() + "_" + foto.getOriginalFilename();
+                    Path filePath = uploadPath.resolve(nombreArchivo);
+
+                    // Guardar archivo
+                    Files.copy(foto.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                    // Actualizar URL de la foto
+                    usuario.setFoto("/uploads/users/fotos/" + nombreArchivo);
+                    actualizado = true;
+                } catch (IOException e) {
+                    throw new RuntimeException("Error al guardar la foto del usuario", e);
+                }
+            }
+
+            if (!actualizado) {
+                throw new ResponseStatusException(HttpStatus.NOT_MODIFIED, "No se detectaron cambios en el usuario");
+            }
+
+            usuarioRepository.save(usuario);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", ResponseMessages.USUARIO_ACTUALIZADO);
+            response.put("usuario", usuarioConverter.toResponseDTO(usuario));
+            return response;
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error al procesar la validación", e);
         }
-
-        if (!actualizado) {
-            throw new ResponseStatusException(HttpStatus.NOT_MODIFIED, "No se detectaron cambios en el usuario");
-        }
-
-        usuarioRepository.save(usuario);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("mensaje", ResponseMessages.USUARIO_ACTUALIZADO);
-        response.put("usuario", usuarioConverter.toResponseDTO(usuario));
-        return response;
     }
 
     @Transactional

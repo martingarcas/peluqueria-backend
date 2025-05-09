@@ -3,6 +3,7 @@ package com.jve.Service;
 import com.jve.Converter.CitaConverter;
 import com.jve.DTO.CitaDTO;
 import com.jve.Entity.*;
+import com.jve.Exception.ResponseMessages;
 import com.jve.Exception.ValidationErrorMessages;
 import com.jve.Repository.*;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,7 @@ public class CitaService {
         response.setCitas(citasDTO);
             
         Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("mensaje", "Citas recuperadas exitosamente");
+        responseMap.put("mensaje", ResponseMessages.CITAS_LISTADAS);
         responseMap.put("citas", response);
         return responseMap;
     }
@@ -105,7 +106,7 @@ public class CitaService {
         response.setCitas(citasDTO);
         
         Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("mensaje", "Citas creadas exitosamente");
+        responseMap.put("mensaje", ResponseMessages.CITA_CREADA);
         responseMap.put("citas", response);
         return responseMap;
     }
@@ -242,7 +243,7 @@ public class CitaService {
         response.setCitas(Collections.singletonList(citaDTO));
         
         Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("mensaje", "Estado de la cita actualizado exitosamente");
+        responseMap.put("mensaje", ResponseMessages.CITA_ACTUALIZADA);
         responseMap.put("cita", response);
         return responseMap;
     }
@@ -349,7 +350,7 @@ public class CitaService {
             });
         
         Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("mensaje", "Disponibilidad recuperada exitosamente");
+        responseMap.put("mensaje", ResponseMessages.DISPONIBILIDAD_RECUPERADA);
         responseMap.put("slots", slots);
         return responseMap;
     }
@@ -381,7 +382,7 @@ public class CitaService {
             .toList();
         
         Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("mensaje", "Trabajadores no disponibles recuperados exitosamente");
+        responseMap.put("mensaje", ResponseMessages.TRABAJADORES_NO_DISPONIBLES_LISTADOS);
         responseMap.put("trabajadoresNoDisponibles", trabajadoresNoDisponibles);
         return responseMap;
     }
