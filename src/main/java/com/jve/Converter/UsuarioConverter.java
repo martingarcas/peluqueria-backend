@@ -2,6 +2,9 @@ package com.jve.Converter;
 
 import com.jve.DTO.UsuarioDTO;
 import com.jve.DTO.RegistroResponseDTO;
+import com.jve.DTO.TrabajadorResponseDTO;
+import com.jve.DTO.ServicioSimpleDTO;
+import com.jve.DTO.HorarioSimpleDTO;
 import com.jve.Entity.Usuario;
 import com.jve.Entity.RolUsuario;
 import com.jve.Entity.Servicio;
@@ -30,16 +33,13 @@ public class UsuarioConverter {
     }
 
     public RegistroResponseDTO toResponseDTO(Usuario usuario) {
-        RegistroResponseDTO dto = modelMapper.map(usuario, RegistroResponseDTO.class);
-        dto.setRole(usuario.getRol().name());
-        dto.setFechaRegistro(usuario.getFechaRegistro() != null ? 
-            usuario.getFechaRegistro().toString() : null);
+        RegistroResponseDTO dto;
         
-        // Convertir servicios y horarios si el usuario es un trabajador
         if (usuario.getRol() == RolUsuario.trabajador) {
+            TrabajadorResponseDTO trabajadorDTO = modelMapper.map(usuario, TrabajadorResponseDTO.class);
             if (usuario.getServicios() != null) {
-                dto.setServicios(usuario.getServicios().stream()
-                    .map(servicio -> new RegistroResponseDTO.ServicioSimpleDTO(
+                trabajadorDTO.setServicios(usuario.getServicios().stream()
+                    .map(servicio -> new ServicioSimpleDTO(
                         servicio.getId(),
                         servicio.getNombre()
                     ))
@@ -47,8 +47,8 @@ public class UsuarioConverter {
             }
             
             if (usuario.getHorarios() != null) {
-                dto.setHorarios(usuario.getHorarios().stream()
-                    .map(horario -> new RegistroResponseDTO.HorarioSimpleDTO(
+                trabajadorDTO.setHorarios(usuario.getHorarios().stream()
+                    .map(horario -> new HorarioSimpleDTO(
                         horario.getId(),
                         horario.getDiaSemana().toString(),
                         horario.getHoraInicio().toString(),
@@ -56,8 +56,15 @@ public class UsuarioConverter {
                     ))
                     .collect(Collectors.toList()));
             }
+            dto = trabajadorDTO;
+        } else {
+            dto = modelMapper.map(usuario, RegistroResponseDTO.class);
         }
         
+        dto.setRole(usuario.getRol().name());
+        dto.setFechaRegistro(usuario.getFechaRegistro() != null ? 
+            usuario.getFechaRegistro().toString() : null);
+            
         return dto;
     }
 } 
