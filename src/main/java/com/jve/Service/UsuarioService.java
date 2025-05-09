@@ -215,6 +215,27 @@ public class UsuarioService {
             usuario.setDireccion(usuarioDTO.getDireccion());
             usuario.setTelefono(usuarioDTO.getTelefono());
 
+            // Si es un trabajador, actualizar servicios y horarios
+            if (usuario.getRol() == RolUsuario.trabajador) {
+                // Validar y actualizar servicios
+                if (usuarioDTO.getServiciosIds() != null && !usuarioDTO.getServiciosIds().isEmpty()) {
+                    List<Servicio> servicios = servicioRepository.findAllById(usuarioDTO.getServiciosIds());
+                    if (servicios.size() != usuarioDTO.getServiciosIds().size()) {
+                        throw new RuntimeException(ValidationErrorMessages.SERVICIOS_NO_ENCONTRADOS);
+                    }
+                    usuario.setServicios(servicios);
+                }
+
+                // Validar y actualizar horarios
+                if (usuarioDTO.getHorariosIds() != null && !usuarioDTO.getHorariosIds().isEmpty()) {
+                    List<Horario> horarios = horarioRepository.findAllById(usuarioDTO.getHorariosIds());
+                    if (horarios.size() != usuarioDTO.getHorariosIds().size()) {
+                        throw new RuntimeException(ValidationErrorMessages.HORARIOS_NO_ENCONTRADOS);
+                    }
+                    usuario.setHorarios(horarios);
+                }
+            }
+
             // Actualizar contraseña solo si se proporciona y cumple el formato
             String password = usuarioDTO.getPassword();
             if (password != null && !password.trim().isEmpty()) {
