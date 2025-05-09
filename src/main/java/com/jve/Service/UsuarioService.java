@@ -13,6 +13,7 @@ import com.jve.Repository.UsuarioRepository;
 import com.jve.Repository.ServicioRepository;
 import com.jve.Repository.HorarioRepository;
 import com.jve.Repository.ProductoRepository;
+import com.jve.Repository.ContratoRepository;
 import com.jve.Converter.UsuarioConverter;
 import com.jve.Exception.ValidationErrorMessages;
 import com.jve.Exception.ResponseMessages;
@@ -49,6 +50,7 @@ public class UsuarioService {
     private final HorarioRepository horarioRepository;
     private final ProductoRepository productoRepository;
     private final ContratoService contratoService;
+    private final ContratoRepository contratoRepository;
     private final ObjectMapper objectMapper;
     private final String UPLOAD_DIR = "uploads/";
     private final String UPLOAD_DIR_FOTOS = "uploads/users/fotos/";
@@ -233,6 +235,30 @@ public class UsuarioService {
                         throw new RuntimeException(ValidationErrorMessages.HORARIOS_NO_ENCONTRADOS);
                     }
                     usuario.setHorarios(horarios);
+                }
+
+                // Manejar el contrato si se proporciona uno nuevo
+                if (usuarioDTO.getContrato() != null) {
+                    // Verificar si tiene un contrato activo o pendiente
+                    boolean tieneContratoActivoOPendiente = contratoRepository.existsByUsuarioIdAndEstadoNombreIn(
+                        usuario.getId(), 
+                        Arrays.asList("ACTIVO", "PENDIENTE")
+                    );
+
+                    if (!tieneContratoActivoOPendiente) {
+                        // Si no tiene contrato activo o pendiente, crear uno nuevo
+                        ContratoDTO contratoDTO = usuarioDTO.getContrato();
+                        contratoDTO.setUsuarioId(usuario.getId());
+
+                        // Si se proporciona el documento del contrato, usarlo
+                        if (documentoContrato != null && !documentoContrato.isEmpty()) {
+                            contratoService.crear(contratoDTO, documentoContrato);
+                        } else {
+                            // Si no se proporciona el documento, crear el contrato sin él
+                            // El frontend deberá hacer una llamada separada para subir el documento
+                            contratoService.crear(contratoDTO, null);
+                        }
+                    }
                 }
             }
 

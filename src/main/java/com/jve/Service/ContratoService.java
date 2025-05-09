@@ -114,22 +114,27 @@ public class ContratoService {
         validarFechasContrato(contratoDTO);
 
         try {
-            // Crear directorio si no existe
-            Path uploadPath = Paths.get("uploads", "contratos");
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            // Generar nombre único para el archivo
-            String fileName = String.format("contrato_%d_%d.pdf", 
-                usuario.getId(), System.currentTimeMillis());
+            String fileName = null;
             
-            // Guardar el archivo
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(documento.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            // Procesar el documento si se proporciona
+            if (documento != null && !documento.isEmpty()) {
+                // Crear directorio si no existe
+                Path uploadPath = Paths.get("uploads", "contratos");
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
 
-            // Establecer la URL del contrato
-            contratoDTO.setUrlContrato("/contratos/" + fileName);
+                // Generar nombre único para el archivo
+                fileName = String.format("contrato_%d_%d.pdf", 
+                    usuario.getId(), System.currentTimeMillis());
+                
+                // Guardar el archivo
+                Path filePath = uploadPath.resolve(fileName);
+                Files.copy(documento.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                // Establecer la URL del contrato
+                contratoDTO.setUrlContrato("/contratos/" + fileName);
+            }
 
             // Ignoramos el estado que venga del frontend y lo asignamos según la fecha
             contratoDTO.setEstadoId(null);
