@@ -104,10 +104,15 @@ public class ContratoService {
             throw new RuntimeException(ValidationErrorMessages.USUARIO_NO_ES_TRABAJADOR);
         }
 
-        // Validar que no tenga un contrato activo o pendiente
-        if (contratoRepository.existsByUsuarioIdAndEstadoNombreIn(
-                usuario.getId(), 
-                Arrays.asList("ACTIVO", "PENDIENTE"))) {
+        // Obtener todos los contratos del usuario
+        List<Contrato> contratosExistentes = contratoRepository.findByUsuarioId(usuario.getId());
+        
+        // Verificar si tiene algún contrato activo o pendiente
+        boolean tieneContratoActivoOPendiente = contratosExistentes.stream()
+            .anyMatch(c -> c.getEstado().getNombre().equals("ACTIVO") || 
+                         c.getEstado().getNombre().equals("PENDIENTE"));
+        
+        if (tieneContratoActivoOPendiente) {
             throw new RuntimeException(ValidationErrorMessages.CONTRATO_YA_EXISTE);
         }
 

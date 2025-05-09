@@ -1,12 +1,10 @@
 package com.jve.Controller;
 
 import com.jve.DTO.ContratoDTO;
-import com.jve.Entity.Contrato;
 import com.jve.Entity.TipoContrato;
 import com.jve.Service.ContratoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -17,8 +15,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,12 +30,11 @@ public class ContratoController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> obtenerTodos() {
         try {
-            Map<String, Object> response = contratoService.obtenerTodos();
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            return ResponseEntity.ok(contratoService.obtenerTodos());
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
@@ -47,12 +42,11 @@ public class ContratoController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> obtenerPorId(@PathVariable Integer id) {
         try {
-            Map<String, Object> response = contratoService.obtenerPorId(id);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            return ResponseEntity.ok(contratoService.obtenerPorId(id));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -60,12 +54,11 @@ public class ContratoController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> obtenerPorUsuarioId(@PathVariable Integer usuarioId) {
         try {
-            Map<String, Object> response = contratoService.obtenerPorUsuarioId(usuarioId);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            return ResponseEntity.ok(contratoService.obtenerPorUsuarioId(usuarioId));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -77,22 +70,13 @@ public class ContratoController {
             @RequestParam(value = "fechaFinContrato", required = false) String fechaFinContrato,
             @RequestParam("tipoContrato") TipoContrato tipoContrato,
             @RequestParam("documento") MultipartFile documento) {
-        
         try {
-            ContratoDTO contratoDTO = new ContratoDTO();
-            contratoDTO.setUsuarioId(usuarioId);
-            contratoDTO.setFechaInicioContrato(java.sql.Date.valueOf(fechaInicioContrato));
-            if (fechaFinContrato != null && !fechaFinContrato.isEmpty()) {
-                contratoDTO.setFechaFinContrato(java.sql.Date.valueOf(fechaFinContrato));
-            }
-            contratoDTO.setTipoContrato(tipoContrato);
-
-            Map<String, Object> response = contratoService.crear(contratoDTO, documento);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(contratoService.crear(usuarioId, fechaInicioContrato, fechaFinContrato, tipoContrato.toString(), documento));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
@@ -105,23 +89,21 @@ public class ContratoController {
         
         if (result.hasErrors()) {
             Map<String, Object> response = new HashMap<>();
-            Map<String, String> errores = result.getFieldErrors().stream()
+            response.put("mensaje", "Error de validación");
+            response.put("errores", result.getFieldErrors().stream()
                 .collect(Collectors.toMap(
                     error -> error.getField(),
                     error -> error.getDefaultMessage()
-                ));
-            response.put("mensaje", "Error de validación");
-            response.put("errores", errores);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                )));
+            return ResponseEntity.badRequest().body(response);
         }
 
         try {
-            Map<String, Object> response = contratoService.actualizar(id, contratoDTO);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            return ResponseEntity.ok(contratoService.actualizar(id, contratoDTO));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
@@ -135,7 +117,7 @@ public class ContratoController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"contrato.pdf\"")
                 .body(resource);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.notFound().build();
         }
     }
 } 
