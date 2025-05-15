@@ -120,4 +120,16 @@ public class ContratoController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/trabajador/{id}/activo")
+    public ResponseEntity<Map<String, Object>> verificarContratoActivo(@PathVariable Integer id) {
+        try {
+            Map<String, Object> response = contratoService.verificarContratoActivo(id);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
 } 

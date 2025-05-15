@@ -314,4 +314,14 @@ public class ContratoService {
         return resource;
     }
 
+    @Transactional(readOnly = true)
+    public Map<String, Object> verificarContratoActivo(Integer trabajadorId) {
+        boolean tieneContratoActivo = contratoRepository.existsByUsuarioIdAndEstadoNombre(trabajadorId, "ACTIVO");
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Verificación de contrato completada");
+        response.put("tieneContratoActivo", tieneContratoActivo);
+        return response;
+    }
+
 } 

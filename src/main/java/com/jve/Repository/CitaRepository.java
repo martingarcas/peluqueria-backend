@@ -17,7 +17,8 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
            "(:esParaTrabajador = false AND c.usuario.id = :usuarioId)) AND " +
            "c.fecha = :fecha AND " +
            "CAST(c.horaInicio AS time) < CAST(:horaFin AS time) AND " +
-           "CAST(c.horaFin AS time) > CAST(:horaInicio AS time)")
+           "CAST(c.horaFin AS time) > CAST(:horaInicio AS time) AND " +
+           "c.estado.nombre != 'CANCELADA'")
     List<Cita> findSolapadas(@Param("usuarioId") Integer usuarioId,
                             @Param("fecha") Date fecha,
                             @Param("horaInicio") Date horaInicio,
@@ -27,5 +28,4 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
     List<Cita> findByFechaBetween(Date fechaInicio, Date fechaFin);
     
     List<Cita> findByTrabajadorIdAndFecha(Integer trabajadorId, Date fecha);
-
 } 
