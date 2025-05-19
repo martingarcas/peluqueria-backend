@@ -40,7 +40,7 @@ public class Servicio {
     @JsonBackReference
     private List<Usuario> usuarios = new ArrayList<>();
 
-    @OneToMany(mappedBy = "servicio")
+    @OneToMany(mappedBy = "servicio", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonBackReference
     private List<Cita> citas = new ArrayList<>();
 } 
