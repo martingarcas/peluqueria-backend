@@ -77,6 +77,7 @@ public class AuthService {
 
             // Crear respuesta
             LoginResponseDTO responseDTO = new LoginResponseDTO(
+                usuario.getId(),
                 usuario.getEmail(),
                 List.of(usuario.getRol().name()),
                 token,

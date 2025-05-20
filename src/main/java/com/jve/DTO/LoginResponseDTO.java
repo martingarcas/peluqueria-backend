@@ -3,6 +3,7 @@ package com.jve.DTO;
 import java.util.List;
 
 public record LoginResponseDTO(
+    Integer id,
     String username,
     List<String> authorities,
     String token,
