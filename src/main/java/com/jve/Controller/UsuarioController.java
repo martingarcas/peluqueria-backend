@@ -69,7 +69,7 @@ public class UsuarioController {
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> actualizar(
             @PathVariable Integer id,
             @RequestPart("usuario") UsuarioDTO usuarioDTO,

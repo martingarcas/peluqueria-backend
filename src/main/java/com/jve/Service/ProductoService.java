@@ -270,4 +270,15 @@ public class ProductoService {
         response.put("producto", converter.toDTO(actualizado));
         return response;
     }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerPorId(Integer id) {
+        Producto producto = productoRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Producto recuperado exitosamente");
+        response.put("producto", converter.toDTO(producto));
+        return response;
+    }
 } 
