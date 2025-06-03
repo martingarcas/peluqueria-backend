@@ -23,6 +23,19 @@ import java.util.stream.Collectors;
 public class CitaController {
     
     private final CitaService citaService;
+
+    @GetMapping("/todas")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> obtenerTodasLasCitas() {
+        try {
+            Map<String, Object> response = citaService.obtenerTodasLasCitas();
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
     
     @GetMapping
     public ResponseEntity<Map<String, Object>> obtenerCitasUsuario() {
