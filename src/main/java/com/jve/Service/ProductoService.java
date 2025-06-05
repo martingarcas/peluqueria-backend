@@ -115,21 +115,6 @@ public class ProductoService {
         return response;
     }
 
-    @Deprecated
-    @Transactional
-    public Map<String, Object> crear(String nombre, String descripcion, BigDecimal precio, 
-            Integer stock, Integer categoriaId, MultipartFile foto) {
-        
-        ProductoDTO productoDTO = new ProductoDTO();
-        productoDTO.setNombre(nombre);
-        productoDTO.setDescripcion(descripcion);
-        productoDTO.setPrecio(precio);
-        productoDTO.setStock(stock);
-        productoDTO.setCategoriaId(categoriaId);
-
-        return crear(productoDTO, foto);
-    }
-
     @Transactional
     public Map<String, Object> actualizar(Integer id, ProductoDTO productoDTO, MultipartFile foto) {
         try {
@@ -232,42 +217,24 @@ public class ProductoService {
 
     @Transactional
     public Map<String, Object> eliminar(Integer id) {
-        if (!productoRepository.existsById(id)) {
-            throw new RuntimeException("No se encontró el producto con id: " + id);
+        Producto producto = productoRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("No se encontró el producto con id: " + id));
+
+        // Eliminar la foto si existe
+        if (producto.getFoto() != null) {
+            try {
+                Path fotoPath = Paths.get(producto.getFoto().replace("/uploads/", "uploads/"));
+                Files.deleteIfExists(fotoPath);
+            } catch (IOException e) {
+                // Log error pero continuar con la eliminación
+                System.err.println("Error eliminando foto: " + e.getMessage());
+            }
         }
-        
-        productoRepository.deleteById(id);
+
+        productoRepository.delete(producto);
         
         Map<String, Object> response = new HashMap<>();
         response.put("mensaje", ResponseMessages.PRODUCTO_ELIMINADO);
-        return response;
-    }
-
-    @Transactional
-    public Map<String, Object> actualizarParcial(Integer id, ProductoDTO productoDTO) {
-        Producto existente = productoRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("No se encontró el producto con id: " + id));
-
-        // Validar si hay cambios reales
-        if (!productoDTO.tieneModificaciones(converter.toDTO(existente))) {
-            throw new RuntimeException("No se detectaron cambios en el producto");
-        }
-
-        // Actualizar solo los campos no nulos
-        if (productoDTO.getNombre() != null) existente.setNombre(productoDTO.getNombre());
-        if (productoDTO.getDescripcion() != null) existente.setDescripcion(productoDTO.getDescripcion());
-        if (productoDTO.getPrecio() != null) existente.setPrecio(productoDTO.getPrecio());
-        if (productoDTO.getStock() != null) existente.setStock(productoDTO.getStock());
-        if (productoDTO.getCategoriaId() != null) {
-            categoriaRepository.findById(productoDTO.getCategoriaId())
-                .ifPresent(existente::setCategoria);
-        }
-
-        Producto actualizado = productoRepository.save(existente);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("mensaje", "Producto actualizado con éxito");
-        response.put("producto", converter.toDTO(actualizado));
         return response;
     }
 

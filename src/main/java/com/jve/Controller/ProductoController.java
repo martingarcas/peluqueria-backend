@@ -98,20 +98,4 @@ public class ProductoController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
-
-    @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> actualizarParcial(
-            @PathVariable Integer id,
-            @Valid @RequestBody ProductoDTO productoDTO) {
-        try {
-            productoDTO.setId(id);
-            Map<String, Object> response = productoService.actualizarParcial(id, productoDTO);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
-        } catch (RuntimeException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-    }
 }

@@ -8,10 +8,8 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
@@ -44,11 +42,4 @@ public class Pedido {
     @JsonManagedReference
     private List<PedidoProducto> pedidoProductos = new ArrayList<>();
 
-    // Constructor para crear pedidos fácilmente
-    public Pedido(Usuario usuario, Estado estado, BigDecimal total) {
-        this.fechaPedido = LocalDateTime.now();
-        this.usuario = usuario;
-        this.estado = estado;
-        this.total = total;
-    }
 } 

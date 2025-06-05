@@ -46,7 +46,7 @@ public class Producto {
     @Temporal(TemporalType.TIMESTAMP)
     private Date fechaCreacion;
 
-    @OneToMany(mappedBy = "producto")
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("producto")
     private List<PedidoProducto> pedidoProductos = new ArrayList<>();
 

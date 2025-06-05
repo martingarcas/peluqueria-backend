@@ -92,41 +92,6 @@ public class UsuarioController {
         }
     }
 
-    @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> actualizarParcial(
-            @PathVariable Integer id,
-            @RequestPart("usuario") UsuarioDTO usuarioDTO,
-            @RequestPart(value = "foto", required = false) MultipartFile foto) {
-        usuarioDTO.setId(id);
-        return ResponseEntity.ok(usuarioService.actualizarParcial(id, usuarioDTO, foto));
-    }
-
-    // Endpoint específico para crear trabajadores con toda la información necesaria
-    @PostMapping(value = "/trabajador", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> crearTrabajador(
-            @RequestPart(value = "usuario") UsuarioDTO usuarioDTO,
-            @RequestPart(value = "foto") MultipartFile foto,
-            @RequestPart(value = "documentoContrato") MultipartFile documentoContrato,
-            @RequestParam(value = "fechaInicioContrato") String fechaInicioContrato,
-            @RequestParam(value = "fechaFinContrato", required = false) String fechaFinContrato,
-            @RequestParam(value = "tipoContrato") String tipoContrato,
-            @RequestParam(value = "salario") String salario) {
-        try {
-            Map<String, Object> response = usuarioService.crearTrabajador(
-                usuarioDTO, foto, documentoContrato, 
-                fechaInicioContrato, fechaFinContrato, 
-                tipoContrato, salario
-            );
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-    }
-
     @GetMapping("/trabajadores")
     public ResponseEntity<Map<String, Object>> obtenerTrabajadores() {
         try {
