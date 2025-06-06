@@ -57,7 +57,7 @@ public class Usuario implements UserDetails {
     @Enumerated(EnumType.STRING)
     private RolUsuario rol;
 
-    @Column
+    @Column(columnDefinition = "LONGTEXT")
     private String carrito;
 
     @Column
