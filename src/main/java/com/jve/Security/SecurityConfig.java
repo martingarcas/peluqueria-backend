@@ -57,7 +57,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/pedidos/**").authenticated()
                 .requestMatchers("/api/lineas-pedido/**").authenticated()
                 .requestMatchers("/api/usuarios/carrito/**").authenticated()
-                .requestMatchers("/uploads/**").permitAll()  // Permitir acceso a uploads
+                .requestMatchers("/uploads/contratos/**").hasRole("ADMIN")
+                .requestMatchers("/uploads/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
