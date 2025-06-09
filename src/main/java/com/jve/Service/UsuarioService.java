@@ -252,11 +252,38 @@ public class UsuarioService {
 
                         // Si se proporciona el documento del contrato, usarlo
                         if (documentoContrato != null && !documentoContrato.isEmpty()) {
-                            contratoService.crear(contratoDTO, documentoContrato);
+                            // Formatear las fechas a YYYY-MM-DD
+                            String fechaInicio = new java.text.SimpleDateFormat("yyyy-MM-dd")
+                                .format(contratoDTO.getFechaInicioContrato());
+                            String fechaFin = contratoDTO.getFechaFinContrato() != null ? 
+                                new java.text.SimpleDateFormat("yyyy-MM-dd")
+                                    .format(contratoDTO.getFechaFinContrato()) : null;
+                            
+                            contratoService.crear(
+                                usuario.getId(),
+                                fechaInicio,
+                                fechaFin,
+                                contratoDTO.getTipoContrato().toString(),
+                                documentoContrato,
+                                contratoDTO.getSalario()
+                            );
                         } else {
                             // Si no se proporciona el documento, crear el contrato sin él
-                            // El frontend deberá hacer una llamada separada para subir el documento
-                            contratoService.crear(contratoDTO, null);
+                            // Formatear las fechas a YYYY-MM-DD
+                            String fechaInicio = new java.text.SimpleDateFormat("yyyy-MM-dd")
+                                .format(contratoDTO.getFechaInicioContrato());
+                            String fechaFin = contratoDTO.getFechaFinContrato() != null ? 
+                                new java.text.SimpleDateFormat("yyyy-MM-dd")
+                                    .format(contratoDTO.getFechaFinContrato()) : null;
+                            
+                            contratoService.crear(
+                                usuario.getId(),
+                                fechaInicio,
+                                fechaFin,
+                                contratoDTO.getTipoContrato().toString(),
+                                null,
+                                contratoDTO.getSalario()
+                            );
                         }
                     }
                 }
@@ -360,9 +387,33 @@ public class UsuarioService {
 
     private void gestionarDatosTrabajador(Usuario usuario, UsuarioDTO usuarioDTO) {
         try {
+            System.out.println("=== DEBUG: Iniciando gestión de datos del trabajador ===");
+            System.out.println("Usuario ID: " + usuario.getId());
+            System.out.println("Contrato DTO: " + usuarioDTO.getContrato());
+            System.out.println("Documento Contrato: " + (usuarioDTO.getDocumentoContrato() != null ? "Presente" : "Null"));
+            
             // Establecer el ID del usuario en el contrato
-            usuarioDTO.getContrato().setUsuarioId(usuario.getId());
-            contratoService.crear(usuarioDTO.getContrato(), usuarioDTO.getDocumentoContrato());
+            ContratoDTO contratoDTO = usuarioDTO.getContrato();
+            System.out.println("Fecha Inicio: " + contratoDTO.getFechaInicioContrato());
+            System.out.println("Fecha Fin: " + contratoDTO.getFechaFinContrato());
+            System.out.println("Tipo Contrato: " + contratoDTO.getTipoContrato());
+            System.out.println("Salario: " + contratoDTO.getSalario());
+            
+            // Formatear las fechas a YYYY-MM-DD
+            String fechaInicio = new java.text.SimpleDateFormat("yyyy-MM-dd")
+                .format(contratoDTO.getFechaInicioContrato());
+            String fechaFin = contratoDTO.getFechaFinContrato() != null ? 
+                new java.text.SimpleDateFormat("yyyy-MM-dd")
+                    .format(contratoDTO.getFechaFinContrato()) : null;
+            
+            contratoService.crear(
+                usuario.getId(),
+                fechaInicio,
+                fechaFin,
+                contratoDTO.getTipoContrato().toString(),
+                usuarioDTO.getDocumentoContrato(),
+                contratoDTO.getSalario()
+            );
             
             List<Servicio> servicios = servicioRepository.findAllById(usuarioDTO.getServiciosIds());
             if (servicios.size() != usuarioDTO.getServiciosIds().size()) {
@@ -378,6 +429,9 @@ public class UsuarioService {
             
             usuarioRepository.save(usuario);
         } catch (Exception e) {
+            System.out.println("=== ERROR EN gestionarDatosTrabajador ===");
+            System.out.println("Mensaje de error: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Error al gestionar datos del trabajador: " + e.getMessage());
         }
     }

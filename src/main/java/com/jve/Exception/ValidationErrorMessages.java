@@ -13,6 +13,7 @@ public class ValidationErrorMessages {
     public static final String PRODUCTO_STOCK_MINIMO = "El stock debe ser un número entero igual o mayor que 0";
     public static final String PRODUCTO_YA_EXISTE = "Ya existe un producto con este nombre";
     public static final String PRODUCTO_NO_CAMBIOS = "No se detectaron cambios en el producto";
+    public static final String PRODUCTO_NO_ENCONTRADO = "No se encontró el producto con id: %d";
 
     // Mensajes para Categoria
     public static final String CATEGORIA_NOMBRE_REQUERIDO = "El nombre de la categoría es obligatorio";

@@ -19,6 +19,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -80,7 +81,19 @@ public class ContratoService {
 
     @Transactional
     public Map<String, Object> crear(Integer usuarioId, String fechaInicioContrato, 
-            String fechaFinContrato, String tipoContrato, MultipartFile documento) {
+            String fechaFinContrato, String tipoContrato, MultipartFile documento, BigDecimal salario) {
+        
+        System.out.println("=== DEBUG: Datos recibidos en crear contrato ===");
+        System.out.println("usuarioId: " + usuarioId);
+        System.out.println("fechaInicioContrato: " + fechaInicioContrato);
+        System.out.println("fechaFinContrato: " + fechaFinContrato);
+        System.out.println("tipoContrato: " + tipoContrato);
+        System.out.println("documento: " + (documento != null ? "Presente" : "Null"));
+        System.out.println("salario: " + salario);
+        
+        if (fechaInicioContrato == null || fechaInicioContrato.trim().isEmpty()) {
+            throw new RuntimeException(ValidationErrorMessages.CONTRATO_FECHA_INICIO_REQUERIDA);
+        }
         
         ContratoDTO contratoDTO = new ContratoDTO();
         contratoDTO.setUsuarioId(usuarioId);
@@ -89,6 +102,7 @@ public class ContratoService {
             contratoDTO.setFechaFinContrato(java.sql.Date.valueOf(fechaFinContrato));
         }
         contratoDTO.setTipoContrato(TipoContrato.valueOf(tipoContrato.toLowerCase()));
+        contratoDTO.setSalario(salario);
 
         return crear(contratoDTO, documento);
     }
@@ -97,6 +111,7 @@ public class ContratoService {
     public Map<String, Object> crear(ContratoDTO contratoDTO, MultipartFile documento) {
         Map<String, Object> response = new HashMap<>();
 
+        // 1. Validar y obtener usuario
         Usuario usuario = usuarioRepository.findById(contratoDTO.getUsuarioId())
             .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
         
@@ -104,10 +119,8 @@ public class ContratoService {
             throw new RuntimeException(ValidationErrorMessages.USUARIO_NO_ES_TRABAJADOR);
         }
 
-        // Obtener todos los contratos del usuario
+        // 2. Verificar contratos existentes
         List<Contrato> contratosExistentes = contratoRepository.findByUsuarioId(usuario.getId());
-        
-        // Verificar si tiene algún contrato activo o pendiente
         boolean tieneContratoActivoOPendiente = contratosExistentes.stream()
             .anyMatch(c -> c.getEstado().getNombre().equals("ACTIVO") || 
                          c.getEstado().getNombre().equals("PENDIENTE"));
@@ -116,39 +129,36 @@ public class ContratoService {
             throw new RuntimeException(ValidationErrorMessages.CONTRATO_YA_EXISTE);
         }
 
+        // 3. Validar fechas
         validarFechasContrato(contratoDTO);
 
         try {
-            String fileName = null;
-            
-            // Procesar el documento si se proporciona
+            // 4. Procesar documento si existe
             if (documento != null && !documento.isEmpty()) {
-                // Crear directorio si no existe
                 Path uploadPath = Paths.get("uploads", "contratos");
                 if (!Files.exists(uploadPath)) {
                     Files.createDirectories(uploadPath);
                 }
 
-                // Generar nombre único para el archivo
-                fileName = String.format("contrato_%d_%d.pdf", 
+                String fileName = String.format("contrato_%d_%d.pdf", 
                     usuario.getId(), System.currentTimeMillis());
                 
-                // Guardar el archivo
                 Path filePath = uploadPath.resolve(fileName);
                 Files.copy(documento.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-                // Establecer la URL del contrato
                 contratoDTO.setUrlContrato("/contratos/" + fileName);
             }
 
-            // Ignoramos el estado que venga del frontend y lo asignamos según la fecha
-            contratoDTO.setEstadoId(null);
-            String estadoNombre = contratoDTO.getFechaInicioContrato().compareTo(new Date()) <= 0 ? "ACTIVO" : "PENDIENTE";
+            // 5. Determinar y obtener estado
+            String estadoNombre = contratoDTO.getFechaInicioContrato().compareTo(new java.sql.Date(System.currentTimeMillis())) <= 0 ? "ACTIVO" : "PENDIENTE";
             Estado estado = estadoRepository.findByNombreAndTipoEstado(estadoNombre, TipoEstado.CONTRATO)
                 .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.ESTADO_NO_ENCONTRADO));
-            contratoDTO.setEstadoId(estado.getId());
 
+            // 6. Crear y guardar contrato
             Contrato contrato = contratoConverter.toEntity(contratoDTO);
+            contrato.setUsuario(usuario);
+            contrato.setEstado(estado);
+            
             Contrato contratoGuardado = contratoRepository.save(contrato);
 
             response.put("mensaje", ResponseMessages.CONTRATO_CREADO);

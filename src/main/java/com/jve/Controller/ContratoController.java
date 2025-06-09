@@ -15,6 +15,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -69,10 +70,11 @@ public class ContratoController {
             @RequestParam("fechaInicioContrato") String fechaInicioContrato,
             @RequestParam(value = "fechaFinContrato", required = false) String fechaFinContrato,
             @RequestParam("tipoContrato") TipoContrato tipoContrato,
-            @RequestParam("documento") MultipartFile documento) {
+            @RequestParam("documentoContrato") MultipartFile documento,
+            @RequestParam("salario") BigDecimal salario) {
         try {
             return ResponseEntity.status(HttpStatus.CREATED)
-                .body(contratoService.crear(usuarioId, fechaInicioContrato, fechaFinContrato, tipoContrato.toString(), documento));
+                .body(contratoService.crear(usuarioId, fechaInicioContrato, fechaFinContrato, tipoContrato.toString(), documento, salario));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());

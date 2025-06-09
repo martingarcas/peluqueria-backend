@@ -3,20 +3,12 @@ package com.jve.Converter;
 import com.jve.DTO.ContratoDTO;
 import com.jve.Entity.Contrato;
 import com.jve.Entity.Estado;
-import com.jve.Entity.TipoEstado;
 import com.jve.Entity.Usuario;
-import com.jve.Repository.EstadoRepository;
-import com.jve.Repository.UsuarioRepository;
 import org.springframework.stereotype.Component;
-import lombok.RequiredArgsConstructor;
 
 @Component
-@RequiredArgsConstructor
 public class ContratoConverter {
     
-    private final UsuarioRepository usuarioRepository;
-    private final EstadoRepository estadoRepository;
-
     public ContratoDTO toDTO(Contrato contrato) {
         if (contrato == null) return null;
         
@@ -42,23 +34,13 @@ public class ContratoConverter {
         if (dto.getId() != null) {
             contrato.setId(dto.getId());
         }
-    
-        Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-    
-        Estado estado = estadoRepository.findById(dto.getEstadoId())
-            .filter(e -> e.getTipoEstado() == TipoEstado.CONTRATO)
-            .orElseThrow(() -> new RuntimeException("El estado indicado no es válido para contratos"));
-    
-        contrato.setUsuario(usuario);
+        
         contrato.setFechaInicioContrato(dto.getFechaInicioContrato());
         contrato.setFechaFinContrato(dto.getFechaFinContrato());
         contrato.setTipoContrato(dto.getTipoContrato());
-        contrato.setEstado(estado);
         contrato.setUrlContrato(dto.getUrlContrato());
         contrato.setSalario(dto.getSalario());
     
         return contrato;
     }
-    
 } 
