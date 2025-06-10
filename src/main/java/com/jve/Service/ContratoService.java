@@ -19,7 +19,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,8 +54,6 @@ public class ContratoService {
         Contrato contrato = contratoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.CONTRATO_NO_ENCONTRADO));
         
-        verificarYActualizarEstadoContrato(contrato);
-        
         response.put("mensaje", ResponseMessages.ENTIDAD_RECUPERADA);
         response.put("contrato", contratoConverter.toDTO(contrato));
         return response;
@@ -66,9 +63,6 @@ public class ContratoService {
     public Map<String, Object> obtenerPorUsuarioId(Integer usuarioId) {
         Map<String, Object> response = new HashMap<>();
         List<Contrato> contratos = contratoRepository.findByUsuarioId(usuarioId);
-        
-        // Verificar y actualizar estado de contratos temporales vencidos
-        contratos.forEach(this::verificarYActualizarEstadoContrato);
         
         List<ContratoDTO> contratosDTO = contratos.stream()
             .map(contratoConverter::toDTO)
@@ -94,8 +88,8 @@ public class ContratoService {
         // 2. Verificar contratos existentes
         List<Contrato> contratosExistentes = contratoRepository.findByUsuarioId(usuario.getId());
         boolean tieneContratoActivoOPendiente = contratosExistentes.stream()
-            .anyMatch(c -> c.getEstado().getNombre().equals("ACTIVO") || 
-                         c.getEstado().getNombre().equals("PENDIENTE"));
+            .anyMatch(contrato -> contrato.getEstado().getNombre().equals("ACTIVO") || 
+                         contrato.getEstado().getNombre().equals("PENDIENTE"));
         
         if (tieneContratoActivoOPendiente) {
             throw new RuntimeException(ValidationErrorMessages.CONTRATO_YA_EXISTE);
@@ -208,21 +202,6 @@ public class ContratoService {
         if (contratoDTO.getFechaFinContrato() != null && 
             contratoDTO.getFechaFinContrato().before(contratoDTO.getFechaInicioContrato())) {
             throw new RuntimeException(ValidationErrorMessages.CONTRATO_FECHA_FIN_ANTERIOR_INICIO);
-        }
-    }
-
-    @Transactional
-    private void verificarYActualizarEstadoContrato(Contrato contrato) {
-        if (contrato.getTipoContrato() == TipoContrato.temporal &&
-            contrato.getFechaFinContrato() != null &&
-            contrato.getFechaFinContrato().before(new Date()) &&
-            contrato.getEstado().getNombre().equals("ACTIVO")) {
-            
-            // Buscar estado INACTIVO
-            contrato.setEstado(estadoRepository.findByNombreAndTipoEstado("INACTIVO", TipoEstado.CONTRATO)
-                .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.ESTADO_NO_ENCONTRADO)));
-            
-            contratoRepository.save(contrato);
         }
     }
 
