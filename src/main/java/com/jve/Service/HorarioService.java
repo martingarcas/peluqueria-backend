@@ -32,7 +32,7 @@ public class HorarioService {
     public Map<String, Object> crear(HorarioDTO horarioDTO) {
         Map<String, Object> response = new HashMap<>();
 
-        // Validar trabajadores
+        // Validar trabajadores - ACTUALMENTE NO SE USA.
         if (horarioDTO.getTrabajadorIds() != null && !horarioDTO.getTrabajadorIds().isEmpty()) {
             for (Integer trabajadorId : horarioDTO.getTrabajadorIds()) {
                 Usuario trabajador = usuarioRepository.findById(trabajadorId)

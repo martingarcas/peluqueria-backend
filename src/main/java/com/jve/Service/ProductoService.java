@@ -63,7 +63,6 @@ public class ProductoService {
         return response;
     }
 
-
     @Transactional
     public Map<String, Object> crear(ProductoDTO productoDTO, MultipartFile foto) {
         try {
@@ -117,7 +116,6 @@ public class ProductoService {
             throw new RuntimeException(ValidationErrorMessages.ERROR_VALIDACION + ": " + e.getMessage());
         }
     }
-
 
     @Transactional
     public Map<String, Object> actualizar(Integer id, ProductoDTO productoDTO, MultipartFile foto) {

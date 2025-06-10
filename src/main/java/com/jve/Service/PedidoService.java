@@ -39,13 +39,18 @@ public class PedidoService {
 
         try {
             // Convertir el carrito de JSON a List<CarritoRequest>
+            //Crea un tipo que representa "Lista de CarritoRequest"
+            //Le dice a Jackson cómo convertir el JSON
+            //Convierte el String JSON en una lista de objetos CarritoRequest
+            //Cada objeto tendrá productoId y cantidad
+            // == new CarritoRequest(1, 2)
             List<PedidoDTO.CarritoRequest> carritoItems = objectMapper.readValue(usuario.getCarrito(),
                 objectMapper.getTypeFactory().constructCollectionType(List.class, PedidoDTO.CarritoRequest.class));
 
-            // Obtener estado inicial (ACEPTADO)
-            logger.info("Buscando estado ACEPTADO para tipo PEDIDO");
-            Estado estadoInicial = estadoRepository.findById(2)  // Usar findById directamente con Integer
-                .orElseThrow(() -> new RuntimeException("Estado ACEPTADO no encontrado para pedidos"));
+            // Obtener estado inicial (PENDIENTE)
+            logger.info("Buscando estado PENDIENTE para tipo PEDIDO");
+            Estado estadoInicial = estadoRepository.findById(1)  // Usar findById directamente con Integer
+                .orElseThrow(() -> new RuntimeException("Estado PENDIENTE no encontrado para pedidos"));
             logger.info("Estado encontrado: id={}, nombre={}, tipo={}", 
                 estadoInicial.getId(), 
                 estadoInicial.getNombre(), 
@@ -56,6 +61,14 @@ public class PedidoService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
             // Calcular total
+            //Inicializamos el total en 0 a través de BigDecimal.ZERO
+            //Evita problemas de precisión con decimales, 
+            //Es la forma recomendada de inicializar a cero en BigDecimal
+            //Recorremos la lista de carritoItems
+            //Buscamos el producto en la base de datos
+            //Multiplicamos el precio del producto por la cantidad
+            //Sumamos el resultado al total
+            //Devolvemos el total
             BigDecimal total = BigDecimal.ZERO;
             for (PedidoDTO.CarritoRequest item : carritoItems) {
                 Producto producto = productoRepository.findById(item.getProductoId())

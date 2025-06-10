@@ -54,7 +54,6 @@ public class UsuarioService {
     private final ObjectMapper objectMapper;
     private final String UPLOAD_DIR = "uploads/";
     private final String UPLOAD_DIR_FOTOS = "uploads/users/fotos/";
-    private final String UPLOAD_DIR_CONTRATOS = "uploads/users/contratos/";
 
     @Transactional(readOnly = true)
     public Map<String, Object> obtenerTodos() {
@@ -367,24 +366,6 @@ public class UsuarioService {
         return response;
     }
 
-    @Transactional(readOnly = true)
-    public Map<String, Object> obtenerCarrito() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
-
-        // Si el carrito es null, inicializarlo como array vacío
-        if (usuario.getCarrito() == null) {
-            usuario.setCarrito("[]");
-            usuarioRepository.save(usuario);
-        }
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("mensaje", "Carrito recuperado exitosamente");
-        response.put("carrito", usuario.getCarrito());
-        return response;
-    }
-
     private void gestionarDatosTrabajador(Usuario usuario, UsuarioDTO usuarioDTO) {
         try {
             System.out.println("=== DEBUG: Iniciando gestión de datos del trabajador ===");
@@ -433,39 +414,6 @@ public class UsuarioService {
             System.out.println("Mensaje de error: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Error al gestionar datos del trabajador: " + e.getMessage());
-        }
-    }
-
-    @Transactional
-    public void updateFotoUrl(Integer id, String fotoUrl) {
-        Usuario usuario = usuarioRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
-            
-        usuario.setFoto(fotoUrl);
-        usuarioRepository.save(usuario);
-    }
-
-    @Transactional(readOnly = true)
-    public String getFotoUrl(Integer id) {
-        return usuarioRepository.findById(id)
-            .map(Usuario::getFoto)
-            .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
-    }
-
-    @Transactional
-    public void deleteFoto(Integer id) {
-        Usuario usuario = usuarioRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
-
-        if (usuario.getFoto() != null) {
-            try {
-                Path filePath = Paths.get(UPLOAD_DIR, usuario.getFoto());
-                Files.deleteIfExists(filePath);
-                usuario.setFoto(null);
-                usuarioRepository.save(usuario);
-            } catch (IOException e) {
-                throw new RuntimeException("Error al eliminar la foto: " + e.getMessage());
-            }
         }
     }
 
@@ -601,47 +549,22 @@ public class UsuarioService {
         return errores;
     }
 
-    @Transactional
-    public String updateFoto(Integer id, MultipartFile file) throws IOException {
-        // Eliminar foto antigua si existe
-        deleteFoto(id);
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerCarrito() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
 
-        // Crear directorio si no existe
-        Path uploadPath = Paths.get(UPLOAD_DIR);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
+        // Si el carrito es null, inicializarlo como array vacío
+        if (usuario.getCarrito() == null) {
+            usuario.setCarrito("[]");
+            usuarioRepository.save(usuario);
         }
 
-        // Generar nombre único para el archivo
-        String fileName = id + "_" + UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        Path filePath = uploadPath.resolve(fileName);
-
-        // Guardar archivo
-        Files.copy(file.getInputStream(), filePath);
-
-        // Actualizar URL de la foto en el usuario
-        String fileUrl = "/uploads/users/" + fileName;
-        updateFotoUrl(id, fileUrl);
-
-        return fileUrl;
-    }
-
-    public byte[] getFotoBytes(Integer id) throws IOException {
-        String fotoUrl = getFotoUrl(id);
-        if (fotoUrl == null || fotoUrl.isEmpty()) {
-            throw new ResourceNotFoundException("Foto no encontrada");
-        }
-
-        Path filePath = Paths.get(fotoUrl.replace("/uploads/", ""));
-        return Files.readAllBytes(filePath);
-    }
-
-    public byte[] getImageBytes(String filename) throws IOException {
-        Path imagePath = Paths.get(UPLOAD_DIR + filename);
-        if (!Files.exists(imagePath)) {
-            throw new ResourceNotFoundException("Imagen no encontrada");
-        }
-        return Files.readAllBytes(imagePath);
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Carrito recuperado exitosamente");
+        response.put("carrito", usuario.getCarrito());
+        return response;
     }
 
     @Transactional
@@ -664,19 +587,7 @@ public class UsuarioService {
 
             // Por cada nuevo producto
             for (Map<String, Object> nuevoItem : nuevosProdutos) {
-                // Validar que solo vengan los campos permitidos
-                Set<String> camposPermitidos = Set.of("productoId", "cantidad");
-                Set<String> camposRecibidos = nuevoItem.keySet();
-                
-                Set<String> camposNoPermitidos = new HashSet<>(camposRecibidos);
-                camposNoPermitidos.removeAll(camposPermitidos);
-                
-                if (!camposNoPermitidos.isEmpty()) {
-                    throw new RuntimeException("Campos no permitidos en el carrito: " + String.join(", ", camposNoPermitidos) + 
-                                            ". Solo se permiten: productoId y cantidad");
-                }
-
-                // Validar que el item tenga los campos necesarios
+                // Validar campos obligatorios
                 if (!nuevoItem.containsKey("productoId") || !nuevoItem.containsKey("cantidad")) {
                     throw new RuntimeException("Cada item del carrito debe tener productoId y cantidad");
                 }
@@ -694,43 +605,27 @@ public class UsuarioService {
                 
                 while (iterator.hasNext()) {
                     Map<String, Object> itemExistente = iterator.next();
+                    // Si encontramos el producto en el carrito
                     if (itemExistente.get("productoId").equals(productoId)) {
                         productoEncontrado = true;
                         int cantidadActual = ((Number) itemExistente.get("cantidad")).intValue();
-                        
-                        if (cantidad == 0) {
-                            // Si la cantidad es 0, eliminar el producto
-                            iterator.remove();
-                        } else if (cantidad < 0) {
-                            // Si la cantidad es negativa, restar del total
-                            int cantidadARestar = Math.abs(cantidad);
-                            int nuevaCantidad = cantidadActual - cantidadARestar;
-                            
-                            if (nuevaCantidad <= 0) {
-                                // Si la nueva cantidad es 0 o negativa, eliminar el producto
-                                iterator.remove();
-                            } else {
-                                // Actualizar la cantidad
-                                itemExistente.put("cantidad", nuevaCantidad);
-                            }
+                        // CASO 1: Si la cantidad nueva es 0 o Si la cantidad nueva es negativa
+                        if (cantidad <= 0) {
+                            iterator.remove();// Eliminamos el producto del carrito
+                        // CASO 3: Si la cantidad nueva es positiva
                         } else {
-                            // Si la cantidad es positiva, sumar al total
-                            int cantidadTotal = cantidadActual + cantidad;
-                            
-                            // Validar stock para la cantidad total
+                            int cantidadTotal = cantidadActual + cantidad; //aumentamos la cantidad con la actual y la que viene
                             if (producto.getStock() < cantidadTotal) {
-                                throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre());
+                                throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre()); // Verificamos stock
                             }
-                            
                             itemExistente.put("cantidad", cantidadTotal);
                         }
-                        break;
+                        break; // Salimos del bucle porque ya encontramos el producto
                     }
                 }
 
                 // Si el producto no existía y la cantidad es positiva, añadirlo al carrito
                 if (!productoEncontrado && cantidad > 0) {
-                    // Validar stock
                     if (producto.getStock() < cantidad) {
                         throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre());
                     }
