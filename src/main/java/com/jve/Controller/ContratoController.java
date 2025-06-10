@@ -1,5 +1,7 @@
 package com.jve.Controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jve.DTO.ContratoDTO;
 import com.jve.Entity.TipoContrato;
 import com.jve.Service.ContratoService;
@@ -67,17 +69,20 @@ public class ContratoController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> crear(
             @RequestParam("usuarioId") Integer usuarioId,
-            @RequestParam("fechaInicioContrato") String fechaInicioContrato,
-            @RequestParam(value = "fechaFinContrato", required = false) String fechaFinContrato,
-            @RequestParam("tipoContrato") TipoContrato tipoContrato,
-            @RequestParam("documentoContrato") MultipartFile documento,
-            @RequestParam("salario") BigDecimal salario) {
+            @RequestParam("contrato") String contratoJson,
+            @RequestParam("documentoContrato") MultipartFile documento) {
         try {
+            ObjectMapper mapper = new ObjectMapper();
+            ContratoDTO contratoDTO = mapper.readValue(contratoJson, ContratoDTO.class);
             return ResponseEntity.status(HttpStatus.CREATED)
-                .body(contratoService.crear(usuarioId, fechaInicioContrato, fechaFinContrato, tipoContrato.toString(), documento, salario));
+                .body(contratoService.crear(usuarioId, contratoDTO, documento));
         } catch (RuntimeException e) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        } catch (JsonProcessingException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Error al procesar los datos del contrato");
             return ResponseEntity.badRequest().body(response);
         }
     }

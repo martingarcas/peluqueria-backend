@@ -80,39 +80,11 @@ public class ContratoService {
     }
 
     @Transactional
-    public Map<String, Object> crear(Integer usuarioId, String fechaInicioContrato, 
-            String fechaFinContrato, String tipoContrato, MultipartFile documento, BigDecimal salario) {
-        
-        System.out.println("=== DEBUG: Datos recibidos en crear contrato ===");
-        System.out.println("usuarioId: " + usuarioId);
-        System.out.println("fechaInicioContrato: " + fechaInicioContrato);
-        System.out.println("fechaFinContrato: " + fechaFinContrato);
-        System.out.println("tipoContrato: " + tipoContrato);
-        System.out.println("documento: " + (documento != null ? "Presente" : "Null"));
-        System.out.println("salario: " + salario);
-        
-        if (fechaInicioContrato == null || fechaInicioContrato.trim().isEmpty()) {
-            throw new RuntimeException(ValidationErrorMessages.CONTRATO_FECHA_INICIO_REQUERIDA);
-        }
-        
-        ContratoDTO contratoDTO = new ContratoDTO();
-        contratoDTO.setUsuarioId(usuarioId);
-        contratoDTO.setFechaInicioContrato(java.sql.Date.valueOf(fechaInicioContrato));
-        if (fechaFinContrato != null && !fechaFinContrato.isEmpty()) {
-            contratoDTO.setFechaFinContrato(java.sql.Date.valueOf(fechaFinContrato));
-        }
-        contratoDTO.setTipoContrato(TipoContrato.valueOf(tipoContrato.toLowerCase()));
-        contratoDTO.setSalario(salario);
-
-        return crear(contratoDTO, documento);
-    }
-
-    @Transactional
-    public Map<String, Object> crear(ContratoDTO contratoDTO, MultipartFile documento) {
+    public Map<String, Object> crear(Integer usuarioId, ContratoDTO contratoDTO, MultipartFile documento) {
         Map<String, Object> response = new HashMap<>();
 
         // 1. Validar y obtener usuario
-        Usuario usuario = usuarioRepository.findById(contratoDTO.getUsuarioId())
+        Usuario usuario = usuarioRepository.findById(usuarioId)
             .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
         
         if (usuario.getRol() != RolUsuario.trabajador) {

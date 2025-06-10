@@ -251,39 +251,21 @@ public class UsuarioService {
 
                         // Si se proporciona el documento del contrato, usarlo
                         if (documentoContrato != null && !documentoContrato.isEmpty()) {
-                            // Formatear las fechas a YYYY-MM-DD
-                            String fechaInicio = new java.text.SimpleDateFormat("yyyy-MM-dd")
-                                .format(contratoDTO.getFechaInicioContrato());
-                            String fechaFin = contratoDTO.getFechaFinContrato() != null ? 
-                                new java.text.SimpleDateFormat("yyyy-MM-dd")
-                                    .format(contratoDTO.getFechaFinContrato()) : null;
-                            
                             contratoService.crear(
                                 usuario.getId(),
-                                fechaInicio,
-                                fechaFin,
-                                contratoDTO.getTipoContrato().toString(),
-                                documentoContrato,
-                                contratoDTO.getSalario()
+                                contratoDTO,
+                                documentoContrato
                             );
                         } else {
                             // Si no se proporciona el documento, crear el contrato sin él
-                            // Formatear las fechas a YYYY-MM-DD
-                            String fechaInicio = new java.text.SimpleDateFormat("yyyy-MM-dd")
-                                .format(contratoDTO.getFechaInicioContrato());
-                            String fechaFin = contratoDTO.getFechaFinContrato() != null ? 
-                                new java.text.SimpleDateFormat("yyyy-MM-dd")
-                                    .format(contratoDTO.getFechaFinContrato()) : null;
-                            
                             contratoService.crear(
                                 usuario.getId(),
-                                fechaInicio,
-                                fechaFin,
-                                contratoDTO.getTipoContrato().toString(),
-                                null,
-                                contratoDTO.getSalario()
+                                contratoDTO,
+                                null
                             );
                         }
+                    } else {
+                        System.out.println("No se crea nuevo contrato porque ya tiene uno activo o pendiente");
                     }
                 }
             }
@@ -368,46 +350,25 @@ public class UsuarioService {
 
     private void gestionarDatosTrabajador(Usuario usuario, UsuarioDTO usuarioDTO) {
         try {
-            System.out.println("=== DEBUG: Iniciando gestión de datos del trabajador ===");
-            System.out.println("Usuario ID: " + usuario.getId());
-            System.out.println("Contrato DTO: " + usuarioDTO.getContrato());
-            System.out.println("Documento Contrato: " + (usuarioDTO.getDocumentoContrato() != null ? "Presente" : "Null"));
-            
-            // Establecer el ID del usuario en el contrato
-            ContratoDTO contratoDTO = usuarioDTO.getContrato();
-            System.out.println("Fecha Inicio: " + contratoDTO.getFechaInicioContrato());
-            System.out.println("Fecha Fin: " + contratoDTO.getFechaFinContrato());
-            System.out.println("Tipo Contrato: " + contratoDTO.getTipoContrato());
-            System.out.println("Salario: " + contratoDTO.getSalario());
-            
-            // Formatear las fechas a YYYY-MM-DD
-            String fechaInicio = new java.text.SimpleDateFormat("yyyy-MM-dd")
-                .format(contratoDTO.getFechaInicioContrato());
-            String fechaFin = contratoDTO.getFechaFinContrato() != null ? 
-                new java.text.SimpleDateFormat("yyyy-MM-dd")
-                    .format(contratoDTO.getFechaFinContrato()) : null;
-            
+
             contratoService.crear(
                 usuario.getId(),
-                fechaInicio,
-                fechaFin,
-                contratoDTO.getTipoContrato().toString(),
-                usuarioDTO.getDocumentoContrato(),
-                contratoDTO.getSalario()
+                usuarioDTO.getContrato(),
+                usuarioDTO.getDocumentoContrato()
             );
-            
+
             List<Servicio> servicios = servicioRepository.findAllById(usuarioDTO.getServiciosIds());
             if (servicios.size() != usuarioDTO.getServiciosIds().size()) {
                 throw new RuntimeException(ValidationErrorMessages.SERVICIOS_NO_ENCONTRADOS);
             }
             usuario.setServicios(servicios);
-            
+
             List<Horario> horarios = horarioRepository.findAllById(usuarioDTO.getHorariosIds());
             if (horarios.size() != usuarioDTO.getHorariosIds().size()) {
                 throw new RuntimeException(ValidationErrorMessages.HORARIOS_NO_ENCONTRADOS);
             }
             usuario.setHorarios(horarios);
-            
+
             usuarioRepository.save(usuario);
         } catch (Exception e) {
             System.out.println("=== ERROR EN gestionarDatosTrabajador ===");
