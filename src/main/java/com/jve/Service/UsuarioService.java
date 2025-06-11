@@ -2,7 +2,6 @@ package com.jve.Service;
 
 import com.jve.DTO.UsuarioDTO;
 import com.jve.DTO.ContratoDTO;
-import com.jve.DTO.RegistroResponseDTO;
 import com.jve.Entity.Usuario;
 import com.jve.Entity.RolUsuario;
 import com.jve.Entity.Servicio;

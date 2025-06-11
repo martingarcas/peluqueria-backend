@@ -356,38 +356,6 @@ public class CitaService {
     }
     
     @Transactional(readOnly = true)
-    public Map<String, Object> obtenerTrabajadoresDisponiblesParaHora(Integer servicioId, Date fecha, String hora) {
-        // Convertir hora string a Date
-        String[] partes = hora.split(":");
-        Calendar calHora = Calendar.getInstance();
-        calHora.setTime(fecha);
-        calHora.set(Calendar.HOUR_OF_DAY, Integer.parseInt(partes[0]));
-        calHora.set(Calendar.MINUTE, Integer.parseInt(partes[1]));
-        calHora.set(Calendar.SECOND, 0);
-        calHora.set(Calendar.MILLISECOND, 0);
-        
-        // Obtener solo trabajadores con contrato activo
-        List<Usuario> trabajadoresActivos = usuarioRepository.findAll().stream()
-            .filter(t -> t.getRol().equals(RolUsuario.trabajador))
-            .filter(t -> contratoRepository.existsByUsuarioIdAndEstadoNombre(t.getId(), "ACTIVO"))
-            .toList();
-        
-        System.out.println("Trabajadores con contrato activo encontrados: " + trabajadoresActivos.size());
-        trabajadoresActivos.forEach(t -> System.out.println("Trabajador ID: " + t.getId()));
-        
-        // Filtrar trabajadores no disponibles
-        List<Integer> trabajadoresNoDisponibles = trabajadoresActivos.stream()
-            .filter(t -> !esTrabajadorDisponible(t, fecha, calHora.getTime(), null))
-            .map(Usuario::getId)
-            .toList();
-        
-        Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("mensaje", ResponseMessages.TRABAJADORES_NO_DISPONIBLES_LISTADOS);
-        responseMap.put("trabajadoresNoDisponibles", trabajadoresNoDisponibles);
-        return responseMap;
-    }
-    
-    @Transactional(readOnly = true)
     public Map<String, Object> obtenerDiasNoDisponiblesParaHora(Integer servicioId, String hora, Date fechaInicio, Date fechaFin) {
         List<Date> diasNoDisponibles = new ArrayList<>();
         Calendar cal = Calendar.getInstance();
@@ -560,51 +528,6 @@ public class CitaService {
         return responseMap;
     }
 
-    @Transactional
-    public Map<String, Object> reasignarCita(Integer id, CitaDTO.ReasignacionRequest reasignacionRequest) {
-        final Cita citaOriginal = citaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.CITA_NO_ENCONTRADA));
-        
-        Usuario trabajador = usuarioRepository.findById(reasignacionRequest.getTrabajadorId())
-            .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
-        
-        // Validar que el trabajador ofrezca el servicio
-        if (trabajador.getServicios().stream().noneMatch(s -> s.getId().equals(citaOriginal.getServicio().getId()))) {
-            throw new RuntimeException(ValidationErrorMessages.CITA_TRABAJADOR_NO_SERVICIO);
-        }
-        
-        // Crear un CitaRequest temporal para la validación de disponibilidad
-        CitaDTO.CitaRequest citaTemp = new CitaDTO.CitaRequest();
-        citaTemp.setFecha(reasignacionRequest.getFecha());
-        citaTemp.setHoraInicio(reasignacionRequest.getHoraInicio());
-        
-        // Validar disponibilidad del nuevo trabajador
-        validarDisponibilidad(trabajador, citaTemp, citaOriginal.getServicio());
-        
-        // Actualizar la cita
-        citaOriginal.setTrabajador(trabajador);
-        citaOriginal.setFecha(reasignacionRequest.getFecha());
-        citaOriginal.setHoraInicio(reasignacionRequest.getHoraInicio());
-        
-        // Calcular nueva hora fin
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(reasignacionRequest.getHoraInicio());
-        cal.add(Calendar.MINUTE, citaOriginal.getServicio().getDuracion());
-        citaOriginal.setHoraFin(Time.valueOf(String.format("%02d:%02d:00", 
-            cal.get(Calendar.HOUR_OF_DAY), 
-            cal.get(Calendar.MINUTE))));
-        
-        final Cita citaActualizada = citaRepository.save(citaOriginal);
-        
-        CitaDTO response = new CitaDTO();
-        response.setCitas(Collections.singletonList(citaConverter.toDto(citaActualizada)));
-        
-        Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("mensaje", "Cita reasignada exitosamente");
-        responseMap.put("cita", response);
-        return responseMap;
-    }
-
     @Transactional(readOnly = true)
     public Map<String, Object> obtenerCitasPorCliente(Integer clienteId) {
         List<Cita> citas = citaRepository.findByUsuarioId(clienteId);
@@ -643,13 +566,6 @@ public class CitaService {
                     cal.get(Calendar.MINUTE))));
             }
         }
-    }
-
-    public Map<String, Object> obtenerTrabajadoresNoDisponiblesConValidacion(
-            Integer servicioId, String fechaStr, String hora) throws ParseException {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        Date fecha = dateFormat.parse(fechaStr);
-        return obtenerTrabajadoresDisponiblesParaHora(servicioId, fecha, hora);
     }
 
     public Map<String, Object> obtenerDiasNoDisponiblesConValidacion(

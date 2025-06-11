@@ -107,25 +107,6 @@ public class CitaController {
         }
     }
     
-    @GetMapping("/trabajadores-no-disponibles")
-    public ResponseEntity<Map<String, Object>> obtenerTrabajadoresNoDisponibles(
-            @RequestParam Integer servicioId,
-            @RequestParam String fecha,
-            @RequestParam String hora) {
-        try {
-            Map<String, Object> response = citaService.obtenerTrabajadoresNoDisponiblesConValidacion(servicioId, fecha, hora);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
-        } catch (ParseException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", "El formato de fecha debe ser yyyy-MM-dd");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        } catch (RuntimeException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-    }
-    
     @GetMapping("/dias-no-disponibles")
     public ResponseEntity<Map<String, Object>> obtenerDiasNoDisponibles(
             @RequestParam Integer servicioId,
@@ -169,34 +150,6 @@ public class CitaController {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        }
-    }
-
-    @PutMapping("/{id}/reasignar")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> reasignarCita(
-            @PathVariable Integer id,
-            @Valid @RequestBody CitaDTO.ReasignacionRequest reasignacionRequest,
-            BindingResult result) {
-        if (result.hasErrors()) {
-            Map<String, Object> response = new HashMap<>();
-            Map<String, String> errores = result.getFieldErrors().stream()
-                .collect(Collectors.toMap(
-                    error -> error.getField(),
-                    error -> error.getDefaultMessage()
-                ));
-            response.put("mensaje", "Error de validación");
-            response.put("errores", errores);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-
-        try {
-            Map<String, Object> response = citaService.reasignarCita(id, reasignacionRequest);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
-        } catch (RuntimeException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
