@@ -258,7 +258,7 @@ public class CitaService {
             Servicio servicio = servicioRepository.findById(servicioId)
                 .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.SERVICIO_NO_ENCONTRADO));
                 
-            if (trabajador.getServicios().stream().noneMatch(s -> s.getId().equals(servicio.getId()))) {
+            if (trabajador.getServicios().stream().noneMatch(servicioTrabajador -> servicioTrabajador.getId().equals(servicio.getId()))) {
                 throw new RuntimeException(ValidationErrorMessages.CITA_TRABAJADOR_NO_SERVICIO);
             }
         }
@@ -271,24 +271,30 @@ public class CitaService {
             return responseMap;
         }
         
+        // Obtener citas del día para el trabajador
         List<Cita> citasDelDia = citaRepository.findByTrabajadorIdAndFecha(trabajador.getId(), fecha);
         System.out.println("Citas encontradas para el día: " + citasDelDia.size());
-        citasDelDia.forEach(c -> System.out.println("Cita existente: " + c.getHoraInicio() + " - " + c.getHoraFin()));
+        citasDelDia.forEach(cita -> System.out.println("Cita existente: " + cita.getHoraInicio() + " - " + cita.getHoraFin()));
         
-        // Obtener el horario del trabajador para ese día
+        // Obtener el horario del trabajador para ese día (en español)
         String diaSemana = new SimpleDateFormat("EEEE", new Locale("es", "ES"))
             .format(fecha).toLowerCase();
             
+        // Preparar lista para slots y formateador de hora    
         List<Map<String, Object>> slots = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
         sdf.setTimeZone(TimeZone.getTimeZone("Europe/Madrid"));
         
+        //Obtenemos todos los horarios del trabajador
+        //Filtra solo el horario del día que nos interesa
         trabajador.getHorarios().stream()
-            .filter(h -> h.getDiaSemana().name().toLowerCase().equals(diaSemana))
+            .filter(horarioTrabajador -> horarioTrabajador.getDiaSemana().name().toLowerCase().equals(diaSemana))
             .forEach(horario -> {
+                // Calendario para hora de inicio
                 Calendar calInicio = Calendar.getInstance(TimeZone.getTimeZone("Europe/Madrid"));
                 calInicio.setTime(horario.getHoraInicio());
-                
+
+                // Calendario para el slot actual
                 Calendar calSlot = Calendar.getInstance(TimeZone.getTimeZone("Europe/Madrid"));
                 calSlot.setTime(fecha);
                 calSlot.set(Calendar.HOUR_OF_DAY, calInicio.get(Calendar.HOUR_OF_DAY));
@@ -296,6 +302,7 @@ public class CitaService {
                 calSlot.set(Calendar.SECOND, 0);
                 calSlot.set(Calendar.MILLISECOND, 0);
                 
+                // Calendario para hora de fin
                 Calendar calFin = Calendar.getInstance(TimeZone.getTimeZone("Europe/Madrid"));
                 calFin.setTime(horario.getHoraFin());
                 
@@ -352,48 +359,6 @@ public class CitaService {
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("mensaje", ResponseMessages.DISPONIBILIDAD_RECUPERADA);
         responseMap.put("slots", slots);
-        return responseMap;
-    }
-    
-    @Transactional(readOnly = true)
-    public Map<String, Object> obtenerDiasNoDisponiblesParaHora(Integer servicioId, String hora, Date fechaInicio, Date fechaFin) {
-        List<Date> diasNoDisponibles = new ArrayList<>();
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(fechaInicio);
-        
-        while (!cal.getTime().after(fechaFin)) {
-            String[] partes = hora.split(":");
-            cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(partes[0]));
-            cal.set(Calendar.MINUTE, Integer.parseInt(partes[1]));
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-            
-            // Verificar si hay algún trabajador disponible para este servicio en este día y hora
-            boolean hayTrabajadorDisponible = usuarioRepository.findByServiciosId(servicioId).stream()
-                .anyMatch(t -> esTrabajadorDisponible(t, cal.getTime(), cal.getTime(), servicioId));
-                
-            if (!hayTrabajadorDisponible) {
-                diasNoDisponibles.add(cal.getTime());
-            }
-            
-            cal.add(Calendar.DAY_OF_MONTH, 1);
-        }
-        
-        // Formatear las fechas como "YYYY-MM-DD"
-        List<String> diasFormateados = diasNoDisponibles.stream()
-            .map(d -> {
-                Calendar temp = Calendar.getInstance();
-                temp.setTime(d);
-                return String.format("%04d-%02d-%02d",
-                    temp.get(Calendar.YEAR),
-                    temp.get(Calendar.MONTH) + 1,
-                    temp.get(Calendar.DAY_OF_MONTH));
-            })
-            .toList();
-        
-        Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("mensaje", "Días no disponibles recuperados exitosamente");
-        responseMap.put("diasNoDisponibles", diasFormateados);
         return responseMap;
     }
     
@@ -467,18 +432,18 @@ public class CitaService {
 
         // Obtener trabajadores que ofrecen el servicio y tienen contrato activo
         List<Usuario> trabajadoresDisponibles = usuarioRepository.findByServiciosId(servicioId).stream()
-            .filter(t -> t.getRol().equals(RolUsuario.trabajador))
-            .filter(t -> contratoRepository.existsByUsuarioIdAndEstadoNombre(t.getId(), "ACTIVO"))
+            .filter(trabajador -> trabajador.getRol().equals(RolUsuario.trabajador))
+            .filter(trabajador -> contratoRepository.existsByUsuarioIdAndEstadoNombre(trabajador.getId(), "ACTIVO"))
             .toList();
 
         // Convertir a DTO solo la información necesaria
         List<Map<String, Object>> trabajadoresInfo = trabajadoresDisponibles.stream()
-            .map(t -> {
+            .map(trabajador -> {
                 Map<String, Object> info = new HashMap<>();
-                info.put("id", t.getId());
-                info.put("nombre", t.getNombre());
-                info.put("apellidos", t.getApellidos());
-                info.put("foto", t.getFoto());
+                info.put("id", trabajador.getId());
+                info.put("nombre", trabajador.getNombre());
+                info.put("apellidos", trabajador.getApellidos());
+                info.put("foto", trabajador.getFoto());
                 return info;
             })
             .toList();
@@ -574,5 +539,47 @@ public class CitaService {
         Date fechaInicio = dateFormat.parse(fechaInicioStr);
         Date fechaFin = dateFormat.parse(fechaFinStr);
         return obtenerDiasNoDisponiblesParaHora(servicioId, hora, fechaInicio, fechaFin);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerDiasNoDisponiblesParaHora(Integer servicioId, String hora, Date fechaInicio, Date fechaFin) {
+        List<Date> diasNoDisponibles = new ArrayList<>();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(fechaInicio);
+        
+        while (!cal.getTime().after(fechaFin)) {
+            String[] partes = hora.split(":");
+            cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(partes[0]));
+            cal.set(Calendar.MINUTE, Integer.parseInt(partes[1]));
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            
+            // Verificar si hay algún trabajador disponible para este servicio en este día y hora
+            boolean hayTrabajadorDisponible = usuarioRepository.findByServiciosId(servicioId).stream()
+                .anyMatch(trabajador -> esTrabajadorDisponible(trabajador, cal.getTime(), cal.getTime(), servicioId));
+                
+            if (!hayTrabajadorDisponible) {
+                diasNoDisponibles.add(cal.getTime());
+            }
+            
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+        }
+        
+        // Formatear las fechas como "YYYY-MM-DD"
+        List<String> diasFormateados = diasNoDisponibles.stream()
+            .map(d -> {
+                Calendar temp = Calendar.getInstance();
+                temp.setTime(d);
+                return String.format("%04d-%02d-%02d",
+                    temp.get(Calendar.YEAR),
+                    temp.get(Calendar.MONTH) + 1,
+                    temp.get(Calendar.DAY_OF_MONTH));
+            })
+            .toList();
+        
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("mensaje", "Días no disponibles recuperados exitosamente");
+        responseMap.put("diasNoDisponibles", diasFormateados);
+        return responseMap;
     }
 } 
