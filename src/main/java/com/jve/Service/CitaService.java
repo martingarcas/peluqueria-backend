@@ -56,9 +56,6 @@ public class CitaService {
         Usuario usuario = usuarioRepository.findByEmail(email)
             .orElseThrow(() -> new RuntimeException(ValidationErrorMessages.USUARIO_NO_ENCONTRADO));
             
-        // Configurar zona horaria para todas las citas
-        configurarZonaHorariaCitas(citaDTO);
-            
         List<Cita> citasCreadas = new ArrayList<>();
         
         for (CitaDTO.CitaRequest citaRequest : citaDTO.getCitas()) {
@@ -70,12 +67,12 @@ public class CitaService {
                     String.format(ValidationErrorMessages.SERVICIO_NO_ENCONTRADO, citaRequest.getServicioId())));
                     
             // Validar que el trabajador tenga el servicio asociado
-            if (trabajador.getServicios().stream().noneMatch(s -> s.getId().equals(servicio.getId()))) {
+            if (trabajador.getServicios().stream().noneMatch(servicioTrabajador -> servicioTrabajador.getId().equals(servicio.getId()))) {
                 throw new RuntimeException(String.format(ValidationErrorMessages.CITA_TRABAJADOR_NO_SERVICIO, 
                     trabajador.getId(), servicio.getId()));
             }
                 
-            // Ajustar la zona horaria correctamente
+            // Configurar zona horaria para todas las citas
             Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Madrid"));
             cal.setTime(citaRequest.getHoraInicio());
             
@@ -517,20 +514,6 @@ public class CitaService {
         responseMap.put("mensaje", "Citas del trabajador recuperadas exitosamente");
         responseMap.put("citas", response);
         return responseMap;
-    }
-
-    // Nuevos métodos auxiliares
-    private void configurarZonaHorariaCitas(CitaDTO citaDTO) {
-        for (CitaDTO.CitaRequest citaRequest : citaDTO.getCitas()) {
-            if (citaRequest.getHoraInicio() != null) {
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(citaRequest.getHoraInicio());
-                cal.setTimeZone(TimeZone.getTimeZone("Europe/Madrid"));
-                citaRequest.setHoraInicio(Time.valueOf(String.format("%02d:%02d:00", 
-                    cal.get(Calendar.HOUR_OF_DAY), 
-                    cal.get(Calendar.MINUTE))));
-            }
-        }
     }
 
     public Map<String, Object> obtenerDiasNoDisponiblesConValidacion(
