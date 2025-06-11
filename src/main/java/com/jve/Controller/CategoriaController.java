@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -16,10 +17,16 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/categorias")
-@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class CategoriaController {
 
     private final CategoriaService categoriaService;
+    private final ObjectMapper objectMapper;
+
+    public CategoriaController(CategoriaService categoriaService, ObjectMapper objectMapper) {
+        this.categoriaService = categoriaService;
+        this.objectMapper = objectMapper;
+    }
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> obtenerTodas() {
@@ -45,19 +52,23 @@ public class CategoriaController {
 
     @PostMapping(consumes = { "multipart/form-data" })
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> crear(
-            @Valid @RequestPart("categoria") CategoriaDTO categoriaDTO,
+    public ResponseEntity<Map<String, Object>> create(
+            @RequestPart("categoria") String categoriaJson,
             @RequestPart(value = "productosNuevos", required = false) String productosNuevosJson,
             @RequestPart(value = "productosExistentesIds", required = false) String productosExistentesIdsJson,
             @RequestPart(value = "forzarMovimiento", required = false) String forzarMovimiento,
             @RequestPart(value = "fotos", required = false) List<MultipartFile> fotos) {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(
-                categoriaService.crear(categoriaDTO, productosNuevosJson, productosExistentesIdsJson, 
-                    Boolean.parseBoolean(forzarMovimiento), fotos)
+            Map<String, Object> response = categoriaService.crearCategoria(
+                categoriaJson, 
+                productosNuevosJson, 
+                productosExistentesIdsJson, 
+                forzarMovimiento != null ? Boolean.parseBoolean(forzarMovimiento) : null, 
+                fotos
             );
-        } catch (RuntimeException e) {
-            Map<String, Object> response = new HashMap<>();
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            Map<String, Object> response  = new HashMap<>();
             response.put("mensaje", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
@@ -67,19 +78,18 @@ public class CategoriaController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> actualizar(
             @PathVariable Integer id,
-            @Valid @RequestPart("categoria") CategoriaDTO categoriaDTO,
+            @RequestPart("categoria") String categoriaJson,
             @RequestPart(value = "productosNuevos", required = false) String productosNuevosJson,
             @RequestPart(value = "productosExistentesIds", required = false) String productosExistentesIdsJson,
             @RequestPart(value = "forzarMovimiento", required = false) String forzarMovimiento,
             @RequestPart(value = "fotos", required = false) List<MultipartFile> fotos) {
         try {
-            categoriaDTO.setId(id);
             return ResponseEntity.ok(
-                categoriaService.actualizar(id, categoriaDTO, productosNuevosJson, productosExistentesIdsJson, 
-                    Boolean.parseBoolean(forzarMovimiento), fotos)
+                categoriaService.actualizar(id, categoriaJson, productosNuevosJson, productosExistentesIdsJson, 
+                    forzarMovimiento != null ? Boolean.parseBoolean(forzarMovimiento) : null, fotos)
             );
-        } catch (RuntimeException e) {
-            Map<String, Object> response = new HashMap<>();
+        } catch (Exception e) {
+            Map<String, Object> response  = new HashMap<>();
             response.put("mensaje", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
