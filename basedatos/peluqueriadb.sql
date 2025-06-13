@@ -27,7 +27,7 @@ CREATE TABLE `categoria` (
   `descripcion` varchar(255) NOT NULL,
   `nombre` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -36,7 +36,7 @@ CREATE TABLE `categoria` (
 
 LOCK TABLES `categoria` WRITE;
 /*!40000 ALTER TABLE `categoria` DISABLE KEYS */;
-INSERT INTO `categoria` VALUES (1,'Categoría por defecto para productos no clasificados','Otros productos'),(7,'Productos relacionados con los tintes de pelo','Tintes para el cabello'),(8,'Productos relacionados con los fijadores de pelo','Fijadores de Pelo');
+INSERT INTO `categoria` VALUES (1,'Categoría por defecto para productos no clasificados','Otros productos'),(7,'Productos relacionados con los tintes de pelo','Tintes para el cabello'),(8,'Productos relacionados con los fijadores de pelo','Fijadores de Pelo'),(60,'Distintos estilos y formatos de secadores','Secadores');
 /*!40000 ALTER TABLE `categoria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -65,7 +65,7 @@ CREATE TABLE `cita` (
   CONSTRAINT `FK35jgeru8qufaq4p8akigahlic` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id`),
   CONSTRAINT `FK68785k2hlh38mhiq3u2ny82p4` FOREIGN KEY (`id_servicio`) REFERENCES `servicio` (`id`),
   CONSTRAINT `FK6dirrhf28fq8ijbkkgp84tu5v` FOREIGN KEY (`id_estado`) REFERENCES `estado` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -74,7 +74,7 @@ CREATE TABLE `cita` (
 
 LOCK TABLES `cita` WRITE;
 /*!40000 ALTER TABLE `cita` DISABLE KEYS */;
-INSERT INTO `cita` VALUES (12,'2025-06-26','19:30:00.000000','19:00:00.000000',7,7,71,2),(13,'2025-06-26','19:00:00.000000','18:30:00.000000',8,7,71,2),(20,'2025-06-17','10:00:00.000000','09:30:00.000000',6,7,51,2);
+INSERT INTO `cita` VALUES (12,'2025-06-26','19:30:00.000000','19:00:00.000000',7,7,71,2),(13,'2025-06-26','19:00:00.000000','18:30:00.000000',8,7,71,2),(20,'2025-06-17','10:00:00.000000','09:30:00.000000',6,7,51,2),(21,'2025-06-16','10:30:00.000000','10:00:00.000000',6,10,72,2);
 /*!40000 ALTER TABLE `cita` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -129,7 +129,7 @@ CREATE TABLE `contrato` (
   KEY `FKjk83wy5pq0a7hufodligiop2k` (`usuario_id`),
   CONSTRAINT `FKh8oj01lhtkv1kj548h4emwt0h` FOREIGN KEY (`estado_id`) REFERENCES `estado` (`id`),
   CONSTRAINT `FKjk83wy5pq0a7hufodligiop2k` FOREIGN KEY (`usuario_id`) REFERENCES `usuario` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -138,7 +138,7 @@ CREATE TABLE `contrato` (
 
 LOCK TABLES `contrato` WRITE;
 /*!40000 ALTER TABLE `contrato` DISABLE KEYS */;
-INSERT INTO `contrato` VALUES (9,NULL,'2025-05-09','fijo','/contratos/contrato_51_1746785893322.pdf',9,51,15000.00),(16,'2025-05-11','2025-05-10','temporal','/contratos/contrato_67_1746805576847.pdf',11,67,5000.00),(20,NULL,'2025-05-16','fijo','/contratos/contrato_71_1747381722196.pdf',9,71,15000.00),(21,NULL,'2025-05-16','fijo','/contratos/contrato_72_1747381835569.pdf',9,72,18000.00),(22,'2026-06-05','2025-06-05','temporal','/contratos/contrato_73_1749118630834.pdf',9,73,150000.00),(23,NULL,'2025-06-05','fijo','/contratos/contrato_67_1749118720155.pdf',9,67,140000.00);
+INSERT INTO `contrato` VALUES (9,NULL,'2025-05-09','fijo','/contratos/contrato_51_1746785893322.pdf',9,51,15000.00),(16,'2025-05-11','2025-05-10','temporal','/contratos/contrato_67_1746805576847.pdf',11,67,5000.00),(20,NULL,'2025-05-16','fijo','/contratos/contrato_71_1747381722196.pdf',9,71,15000.00),(21,NULL,'2025-05-16','fijo','/contratos/contrato_72_1747381835569.pdf',9,72,18000.00),(22,'2026-06-05','2025-06-05','temporal','/contratos/contrato_73_1749118630834.pdf',9,73,150000.00),(23,NULL,'2025-06-05','fijo','/contratos/contrato_67_1749118720155.pdf',9,67,140000.00),(37,NULL,'2025-06-11','fijo','/contratos/contrato_92_1749664183315.pdf',9,92,15000.00);
 /*!40000 ALTER TABLE `contrato` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -215,7 +215,7 @@ CREATE TABLE `horario` (
   `hora_inicio` time(6) DEFAULT NULL,
   `nombre` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -224,7 +224,7 @@ CREATE TABLE `horario` (
 
 LOCK TABLES `horario` WRITE;
 /*!40000 ALTER TABLE `horario` DISABLE KEYS */;
-INSERT INTO `horario` VALUES (1,'lunes','14:00:00.000000','08:00:00.000000','Lunes Turno de mañana'),(5,'martes','14:00:00.000000','08:00:00.000000','Martes Turno de mañana'),(6,'jueves','19:30:00.000000','17:00:00.000000','Jueves Turno de Tarde');
+INSERT INTO `horario` VALUES (1,'lunes','14:00:00.000000','08:00:00.000000','Lunes Turno de mañana'),(5,'martes','14:00:00.000000','08:00:00.000000','Martes Turno de mañana'),(6,'jueves','19:30:00.000000','17:00:00.000000','Jueves Turno de Tarde'),(11,'viernes','14:00:00.000000','09:00:00.000000','Viernes Turno de mañana');
 /*!40000 ALTER TABLE `horario` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -251,7 +251,7 @@ CREATE TABLE `horario_trabajador` (
 
 LOCK TABLES `horario_trabajador` WRITE;
 /*!40000 ALTER TABLE `horario_trabajador` DISABLE KEYS */;
-INSERT INTO `horario_trabajador` VALUES (72,1),(72,6),(71,5),(71,6),(73,1),(73,5),(67,1),(67,5),(51,5);
+INSERT INTO `horario_trabajador` VALUES (51,5),(67,1),(67,5),(71,5),(71,6),(73,1),(73,5),(72,1),(72,6),(92,11);
 /*!40000 ALTER TABLE `horario_trabajador` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -273,7 +273,7 @@ CREATE TABLE `pedido` (
   KEY `FK6uxomgomm93vg965o8brugt00` (`usuario_id`),
   CONSTRAINT `FK6uxomgomm93vg965o8brugt00` FOREIGN KEY (`usuario_id`) REFERENCES `usuario` (`id`),
   CONSTRAINT `FKlpuc2kd4q97wd68te94hcw8sl` FOREIGN KEY (`estado_id`) REFERENCES `estado` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -282,7 +282,7 @@ CREATE TABLE `pedido` (
 
 LOCK TABLES `pedido` WRITE;
 /*!40000 ALTER TABLE `pedido` DISABLE KEYS */;
-INSERT INTO `pedido` VALUES (1,'2025-05-22 21:38:31.132040',67.98,1,2),(2,'2025-06-05 11:34:32.016466',23.99,2,2);
+INSERT INTO `pedido` VALUES (1,'2025-05-22 21:38:31.132040',67.98,1,2),(2,'2025-06-05 11:34:32.016466',23.99,2,2),(4,'2025-06-10 21:30:27.166053',67.98,2,2),(5,'2025-06-10 21:31:35.484458',12.50,1,2),(6,'2025-06-10 21:31:47.491126',46.49,1,2);
 /*!40000 ALTER TABLE `pedido` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -305,7 +305,7 @@ CREATE TABLE `pedido_producto` (
   KEY `FKl9lfd6a7bi0o5qn2f3epfbpin` (`producto_id`),
   CONSTRAINT `FK7uyg0ynfe4wadl7ha9bmtynvm` FOREIGN KEY (`pedido_id`) REFERENCES `pedido` (`id`),
   CONSTRAINT `FKl9lfd6a7bi0o5qn2f3epfbpin` FOREIGN KEY (`producto_id`) REFERENCES `producto` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -314,7 +314,7 @@ CREATE TABLE `pedido_producto` (
 
 LOCK TABLES `pedido_producto` WRITE;
 /*!40000 ALTER TABLE `pedido_producto` DISABLE KEYS */;
-INSERT INTO `pedido_producto` VALUES (1,2,'Eva divina color studio',33.99,1,2),(2,1,'Tricomix Gel Hair',23.99,2,1);
+INSERT INTO `pedido_producto` VALUES (1,2,'Eva divina color studio',33.99,1,2),(2,1,'Tricomix Gel Hair',23.99,2,1),(4,2,'Eva divina color studio',33.99,4,2),(5,1,'Gel fijador coco Eseuve',12.50,5,3),(6,1,'Eva divina color studio',33.99,6,2),(7,1,'Gel fijador coco Eseuve',12.50,6,3);
 /*!40000 ALTER TABLE `pedido_producto` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -337,7 +337,7 @@ CREATE TABLE `producto` (
   PRIMARY KEY (`id`),
   KEY `FK9nyueixdsgbycfhf7allg8su` (`id_categoria`),
   CONSTRAINT `FK9nyueixdsgbycfhf7allg8su` FOREIGN KEY (`id_categoria`) REFERENCES `categoria` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -346,7 +346,7 @@ CREATE TABLE `producto` (
 
 LOCK TABLES `producto` WRITE;
 /*!40000 ALTER TABLE `producto` DISABLE KEYS */;
-INSERT INTO `producto` VALUES (1,'Fijador potente con eucalipto','2025-04-29 19:01:07.554000','/uploads/productos/d6e39415-48b1-45fb-a268-efdd97e18577_fijadorpelo1.png','Tricomix Gel Hair',23.99,60,1),(2,'Mascarilla de color fucsia','2025-04-29 19:02:33.181000','/uploads/productos/6a7b4a0b-7aee-4d5a-80d6-189dc620aba0_tintepelo1.png','Eva divina color studio',33.99,52,7),(3,'Fijador para el pelo con extracto de coco','2025-05-05 18:03:51.672000','/uploads/productos/5d3f7dba-ac1c-47b5-abec-8ba777b746ee_fijadorpelo2.png','Gel fijador coco Eseuve',12.50,60,8);
+INSERT INTO `producto` VALUES (1,'Fijador potente con eucalipto','2025-04-29 19:01:07.554000','/uploads/productos/65af3898-3de8-4edd-bf90-5dc779a9b2f0_fijadorpelo1.png','Tricomix Gel Hair',23.99,60,8),(2,'Mascarilla de color fucsia','2025-04-29 19:02:33.181000','/uploads/productos/b9d13ebd-47b9-42bf-99a6-2269c56a906b_tintepelo1.png','Eva divina color studio',33.99,49,7),(3,'Fijador para el pelo con extracto de coco','2025-05-05 18:03:51.672000','/uploads/productos/34a30289-a63b-4a14-b5d3-d5eb71e79296_fijadorpelo2.png','Gel fijador coco Eseuve',12.50,58,8),(44,'Potencia y cuidado capilar con tecnología iónica, motor silencioso.','2025-06-11 19:20:50.912000','/uploads/productos/fa525822-a7d7-4ec2-8d65-99739d1b4098_secador1.png','Deluxe Ionic 2300W AC',52.90,65,60),(45,'Máquina de cortar pelo profesional','2025-06-11 19:23:41.201000','/uploads/productos/3e402b37-bfc2-44a2-84b1-7940ccb4d4b1_maquinilla1.png','Máquina Moser Max 45',120.00,32,1);
 /*!40000 ALTER TABLE `producto` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -399,7 +399,7 @@ CREATE TABLE `usuario` (
   `salario` decimal(10,2) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK5171l57faosmj8myawaucatdw` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=88 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=93 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -408,7 +408,7 @@ CREATE TABLE `usuario` (
 
 LOCK TABLES `usuario` WRITE;
 /*!40000 ALTER TABLE `usuario` DISABLE KEYS */;
-INSERT INTO `usuario` VALUES (1,'administrador',NULL,'Infanta Margarita','admin@gmail.com','2025-04-26 13:02:50.268000','/uploads/users/fotos/f0d1da2b-6576-46d7-a261-cfb53d60c5fe_450_1000.jpg','Admin','$2a$10$hGkDSP2vAdCtBTP9/5ix1u09j6j3IDvhiVmtjc5FxShCfIgq7Qlxe','admin','693209523',NULL),(2,'García Castillo','[{\"precioUnitario\":33.99,\"productoId\":2,\"cantidad\":1,\"nombreProducto\":\"Eva divina color studio\"}]','Infanta Pilar 21, Las Infantas','martin@gmail.com','2025-04-26 14:58:05.523000','/uploads/users/fotos/9db1a667-6c10-4add-9854-749725f7fd28_20180102_010346.jpg','Martín','$2a$10$uYtNEc7NM1m6WhSS7aGzPuwsVylH.9nYJW8P.Y26D8hrnluhUESh6','cliente','693209523',NULL),(51,'Ramírez',NULL,'','dasasd@gmail.com','2025-05-09 12:18:13.319000','/uploads/users/fotos/8fb6c51f-06f5-4ea7-b8ae-03af0d7567a8_IMG-20200424-WA0009.jpg','Agustín','$2a$10$F2pl45k9hQJMAVN2zUtDWOK/PGBYzzWlniCgDihpu/1Im13JuDlEe','trabajador','686141296',NULL),(67,'fsdfsdf',NULL,'','sdasd@gmail.com','2025-05-09 17:46:16.844000','/uploads/users/fotos/335d0262-73b7-4840-aed9-71b2b152bdf2_IMG_20190421_011658_482.jpg','DANIEL','$2a$10$fsOHEs/OkvVqyLEZyl3KJOBxZN1kdI2C5IpeaBvxbt7A2LkGEkU6S','trabajador','686141296',NULL),(71,'Rodríguez',NULL,'','javirod@gmail.com','2025-05-16 09:48:42.192000','/uploads/users/fotos/8be22997-db7e-438e-99ff-b0699eeee2e8_Screenshot_20190404-222452.png','Javier','$2a$10$n8rRH24Yq45.dUUlch3FPu2yWbYUR1qkV1m1O/VvtxoIYs4wWh/ey','trabajador','686141296',NULL),(72,'García',NULL,'','tamara@gmail.com','2025-05-16 09:50:35.565000','/uploads/users/fotos/51930cf2-1765-4b92-9af5-be648d7e1f2a_IMG-20190502-WA0012.jpg','Tamara','$2a$10$ndKcM4uxsWi8cpF0HnpM/Ou5nMci6GIIxnfO5ZVY7ydse07kXgpMu','trabajador','686141296',NULL),(73,'Cabrera',NULL,'Avenida Blas Infanta, 24, 3ºB','mcabrera@gmail.com','2025-06-05 12:17:10.827000','/uploads/users/fotos/0db78125-96a4-4ac8-9930-a20dbe8c9331_2017-05-13 16.48.04.jpg','Manuel','$2a$10$m5tSo/JgD/8nF2vdYv803uRkcACeJLi7tUfbbs8ANqgUTCUTZ1loK','trabajador','674374383',NULL);
+INSERT INTO `usuario` VALUES (1,'administrador',NULL,'Infanta Margarita','admin@gmail.com','2025-04-26 13:02:50.268000','/uploads/users/fotos/6c2e604d-41a9-41bf-8321-36ea36ed3118_admin.png','Admin','$2a$10$hGkDSP2vAdCtBTP9/5ix1u09j6j3IDvhiVmtjc5FxShCfIgq7Qlxe','admin','693209523',NULL),(2,'García Castillo','[{\"precioUnitario\":52.9,\"productoId\":44,\"cantidad\":1,\"nombreProducto\":\"Deluxe Ionic 2300W AC\"}]','Infanta Pilar 21, Las Infantas','martin@gmail.com','2025-04-26 14:58:05.523000','/uploads/users/fotos/ce9d5caf-0007-4cc1-a0a0-580ada36f8ab_IMG-20191222-WA0022.jpg','Martín','$2a$10$uYtNEc7NM1m6WhSS7aGzPuwsVylH.9nYJW8P.Y26D8hrnluhUESh6','cliente','693209523',NULL),(51,'Fernández',NULL,'Calle Navas de Tolosa 12, 1ºA, Jaén','lucas@gmail.com','2025-05-09 12:18:13.319000','/uploads/users/fotos/a010e719-58b5-4227-969b-f83021075b42_peluquero1.png','Lucas','$2a$10$CMkow6u5e1B645MqZ3RiA.IkuSipiMjSRrtL5RQE/sP35W4M/c5A2','trabajador','612345678',NULL),(67,'Ramírez',NULL,'Avenida de Andalucía 45, Jaén','diego@gmail.com','2025-05-09 17:46:16.844000','/uploads/users/fotos/656d4f60-dfa0-4ebf-b2af-e1f99de29b8e_peluquero3.png','Diego','$2a$10$R4znXRk1XCIKDrwPtc4AFu4d0FXCoCCpKTYXAkwAy2GND5ZrvVMFi','trabajador','623987456',NULL),(71,'Morales',NULL,'Calle Millán de Priego 7, Jaén','javirod@gmail.com','2025-05-16 09:48:42.192000','/uploads/users/fotos/58ca269a-1844-4189-a566-26578b5ddf0d_peluquero2.png','Javier','$2a$10$tP.nnWr.G3DAQDRBDDQ2Ku5e3f8PiZuU0Zpl8JJJEIRcZM2/Z3Xxy','trabajador','634228119',NULL),(72,'Gómez',NULL,'Calle Federico Mendizábal 9, Jaén','tamara@gmail.com','2025-05-16 09:50:35.565000','/uploads/users/fotos/b8234d94-3579-4b60-a429-4a67c9387ec9_peluquero4.png','Tamara','$2a$10$f22wlhW9yq7xEYtu2PdfcuZWWpVrpepW5KaKIjEIBqbHLZtjgzrSW','trabajador','656882134',NULL),(73,'López',NULL,'Calle Arquitecto Berges 33, Jaén','adrian@gmail.com','2025-06-05 12:17:10.827000','/uploads/users/fotos/5e78b789-4519-4003-b310-9a91c14e9f8f_peluquero6.png','Adrián','$2a$10$YJ3qNGODV8wszwQJp/wMsuZKHBjzH6t/EYN8Rhq6CscTwjbf4y8y.','trabajador','645779300',NULL),(92,'Torres',NULL,'Paseo de la Estación 56, Jaén','marina@gmail.com','2025-06-11 19:49:43.311000','/uploads/users/fotos/deaedfad-b70c-46ef-904a-2710eefae346_peluquero5.png','Marina','$2a$10$GkiX9vvxQjL247kP/SAtF.SnvpT2WmJ2FVfhs6Om1OVTDantKkeaG','trabajador','667543209',NULL);
 /*!40000 ALTER TABLE `usuario` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -435,7 +435,7 @@ CREATE TABLE `usuario_has_servicio` (
 
 LOCK TABLES `usuario_has_servicio` WRITE;
 /*!40000 ALTER TABLE `usuario_has_servicio` DISABLE KEYS */;
-INSERT INTO `usuario_has_servicio` VALUES (72,8),(72,10),(71,7),(71,11),(73,8),(73,11),(67,7),(51,7),(51,8),(51,11),(51,12);
+INSERT INTO `usuario_has_servicio` VALUES (51,7),(51,8),(51,11),(51,12),(67,7),(71,7),(71,11),(73,8),(73,11),(72,8),(72,10),(72,12),(92,7),(92,8),(92,9),(92,10);
 /*!40000 ALTER TABLE `usuario_has_servicio` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -448,4 +448,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-06-10  0:42:40
+-- Dump completed on 2025-06-13  2:44:41
