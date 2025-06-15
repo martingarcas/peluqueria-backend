@@ -569,12 +569,13 @@ public class UsuarioService {
                     if (itemExistente.get("productoId").equals(productoId)) {
                         productoEncontrado = true;
                         int cantidadActual = ((Number) itemExistente.get("cantidad")).intValue();
+                        int cantidadTotal = cantidadActual + cantidad; // Sumamos la cantidad actual con la nueva (que puede ser negativa)
                         // CASO 1: Si la cantidad nueva es 0 o Si la cantidad nueva es negativa
-                        if (cantidad <= 0) {
+                        if (cantidadTotal <= 0) {
                             iterator.remove();// Eliminamos el producto del carrito
                         // CASO 3: Si la cantidad nueva es positiva
                         } else {
-                            int cantidadTotal = cantidadActual + cantidad; //aumentamos la cantidad con la actual y la que viene
+                            cantidadTotal = cantidadActual + cantidad; //aumentamos la cantidad con la actual y la que viene
                             if (producto.getStock() < cantidadTotal) {
                                 throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre()); // Verificamos stock
                             }
