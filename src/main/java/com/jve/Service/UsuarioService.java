@@ -569,19 +569,27 @@ public class UsuarioService {
                     if (itemExistente.get("productoId").equals(productoId)) {
                         productoEncontrado = true;
                         int cantidadActual = ((Number) itemExistente.get("cantidad")).intValue();
-                        int cantidadTotal = cantidadActual + cantidad; // Sumamos la cantidad actual con la nueva (que puede ser negativa)
-                        // CASO 1: Si la cantidad nueva es 0 o Si la cantidad nueva es negativa
+                        
+                        // Si la cantidad es 0, eliminamos el producto directamente
+                        if (cantidad == 0) {
+                            iterator.remove();
+                            break;
+                        }
+                        
+                        // Calculamos la nueva cantidad total
+                        int cantidadTotal = cantidadActual + cantidad;
+                        
+                        // Si la cantidad total es 0 o negativa, eliminamos el producto
                         if (cantidadTotal <= 0) {
-                            iterator.remove();// Eliminamos el producto del carrito
-                        // CASO 3: Si la cantidad nueva es positiva
+                            iterator.remove();
                         } else {
-                            cantidadTotal = cantidadActual + cantidad; //aumentamos la cantidad con la actual y la que viene
+                            // Si la cantidad total es positiva, actualizamos la cantidad
                             if (producto.getStock() < cantidadTotal) {
-                                throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre()); // Verificamos stock
+                                throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre());
                             }
                             itemExistente.put("cantidad", cantidadTotal);
                         }
-                        break; // Salimos del bucle porque ya encontramos el producto
+                        break;
                     }
                 }
 
